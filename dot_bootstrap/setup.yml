@@ -11,7 +11,7 @@
         remote_regular_user: "{{ ansible_env.SUDO_USER or ansible_user_id }}"
 
     - name: Install packages
-      ansible.builtin.dnf:
+      ansible.builtin.apt:
         name:
           - git
           - htop
@@ -22,9 +22,7 @@
           - fzf
           - tmux
           - make
-          - sqlite
-          - sqlite-devel
-          - openssl-devel
+          - openssl
           - fd-find
           - unar
         state: present
@@ -33,11 +31,6 @@
       ansible.builtin.user:
         name: "{{ remote_regular_user }}"
         shell: /usr/bin/zsh
-
-    - name: Install DNF plugins core
-      ansible.builtin.dnf:
-        name: dnf-plugins-core
-        state: present
 
     - name: Add Brave Browser Repo
       ansible.builtin.yum_repository:
@@ -54,7 +47,7 @@
         state: present
 
     - name: Install Brave Browser
-      ansible.builtin.dnf:
+      ansible.builtin.apt:
         name: brave-browser
         state: present
 
@@ -139,3 +132,19 @@
         remote_src: true
         mode: "0755"
         owner: "{{ remote_regular_user }}"
+
+    - name: "Add nodejs apt key"
+      apt_key:
+        url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+        state: present
+
+    - name: "Add nodejs 20.x ppa for apt repo"
+      apt_repository:
+        repo: deb https://deb.nodesource.com/setup_20.x bionic main
+        update_cache: yes
+
+    - name: "Install nodejs"
+      apt:
+        update_cache: yes
+        name: nodejs
+        state: present
