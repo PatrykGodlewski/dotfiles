@@ -5,42 +5,27 @@
       "alignment": "left",
       "segments": [
         {
-          "background": "#ffffff",
-          "foreground": "#000000",
-          "leading_diamond": "",
-          "style": "diamond",
-          "template": " {{ if .WSL }}WSL at {{ end }}{{.Icon}} ",
-          "trailing_diamond": "",
+          "foreground": "cyan",
+          "style": "powerline",
+          "template": "{{ if .WSL }}WSL at {{ end }}{{.Icon}}",
           "type": "os"
         },
         {
-          "background": "#0000ff",
-          "foreground": "#000000",
-          "powerline_symbol": "",
+          "foreground": "cyan",
           "properties": {
             "style": "full"
           },
-          "style": "powerline",
-          "template": "  ",
-          "type": "root"
-        },
-        {
-          "background": "#0000ff",
-          "foreground": "#ffffff",
-          "powerline_symbol": "",
-          "properties": {
-            "style": "full"
-          },
-          "style": "powerline",
+          "style": "plain",
           "template": " {{ .Path }} ",
           "type": "path"
         },
         {
-          "background": "#D4E157",
-          "foreground": "#000000",
-          "powerline_symbol": "",
-          "style": "powerline",
-          "template": " {{ .HEAD }} ",
+          "foreground": "#F1502F",
+          "properties": {
+            "fetch_status": true
+          },
+          "style": "plain",
+          "template": ":: {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }} ",
           "type": "git"
         }
       ],
@@ -50,31 +35,52 @@
       "alignment": "right",
       "segments": [
         {
-          "background": "#D4E157",
-          "foreground": "#000000",
-          "leading_diamond": "",
-          "style": "diamond",
-          "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} <transparent></>",
+          "foreground": "red",
+          "style": "plain",
+          "template": "| root ",
+          "type": "root"
+        },
+        {
+          "foreground": "#06A4CE",
+          "style": "powerline",
+          "template": "| \ue798 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} ",
+          "type": "dart"
+        },
+        {
+          "foreground": "#6CA35E",
+          "style": "powerline",
+          "template": "| \ue718 {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} ",
+          "type": "node"
+        },
+        {
+          "foreground": "#4584b6",
+          "properties": {
+            "display_mode": "context",
+            "fetch_virtual_env": true
+          },
+          "style": "plain",
+          "template": "| \ue235 {{ .Venv }} ",
           "type": "python"
         },
         {
-          "background": "#7FD5EA",
-          "foreground": "#ffffff",
-          "leading_diamond": "",
-          "style": "diamond",
-          "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} <transparent></>",
-          "type": "go"
+          "foreground_templates": [
+            "{{if eq \"Charging\" .State.String}}#4caf50{{end}}",
+            "{{if eq \"Discharging\" .State.String}}#40c4ff{{end}}",
+            "{{if eq \"Full\" .State.String}}#ff0000{{end}}"
+          ],
+          "invert_powerline": true,
+          "properties": {
+            "charged_icon": "\uf00d ",
+            "charging_icon": "\ue234 "
+          },
+          "style": "powerline",
+          "template": "| {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} \uf295 ",
+          "type": "battery"
         },
         {
-          "background": "#ffffff",
-          "foreground": "#000000",
-          "leading_diamond": "",
-          "properties": {
-            "time_format": "15:04:05"
-          },
-          "style": "diamond",
-          "template": " {{ .CurrentDate | date .Format }} ",
-          "trailing_diamond": "",
+          "foreground": "lightGreen",
+          "style": "plain",
+          "template": "| {{ .CurrentDate | date .Format }} ",
           "type": "time"
         }
       ],
@@ -85,13 +91,13 @@
       "newline": true,
       "segments": [
         {
-          "foreground": "#D4E157",
-          "foreground_templates": ["{{ if gt .Code 0 }}#FF5252{{ end }}"],
+          "foreground": "lightGreen",
+          "foreground_templates": ["{{ if gt .Code 0 }}red{{ end }}"],
           "properties": {
             "always_enabled": true
           },
-          "style": "plain",
-          "template": "❯ ",
+          "style": "powerline",
+          "template": "\u279c ",
           "type": "status"
         }
       ],
