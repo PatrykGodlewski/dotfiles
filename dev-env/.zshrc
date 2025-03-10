@@ -1,3 +1,9 @@
+add_to_path() {
+   if [[ "$PATH" != *"$1"* ]]; then
+      export PATH=$1:$PATH
+   fi
+}
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
@@ -32,12 +38,12 @@ zinit cdreplay -q
 
 # Oh my posh
 # eval "$(oh-my-posh --init --shell bash --config ~/.{theme}.omp.json)"
-eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/base.json)"
+# eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/base.json)"
 # Keybindings
-bindkey -e
-bindkey '^p' history-search-backward
-bindkey '^n' history-search-forward
-bindkey '^[w' kill-region
+# bindkey -e
+# bindkey '^p' history-search-backward
+# bindkey '^n' history-search-forward
+# bindkey '^[w' kill-region
 
 # History
 HISTSIZE=5000
@@ -63,9 +69,10 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
+alias dev-edit="nvim $HOME/projects/dotfiles"
 
 # Shell integrations
-# source <(fzf --zsh)
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 eval "$(zoxide init --cmd cd zsh)"
 
 export NVM_DIR="$HOME/.nvm"
@@ -75,14 +82,8 @@ export NVM_DIR="$HOME/.nvm"
 # bun completions
 [ -s "/home/patryk/.bun/_bun" ] && source "/home/patryk/.bun/_bun"
 
+
 # bun
 export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export PATH=$PATH:$JAVA_HOME/bin
-
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
-export PATH=$PATH:$ANDROID_HOME/platform-tools
+add_to_path "$BUN_INSTALL/bin"
+add_to_path "$HOME/.local/scripts"

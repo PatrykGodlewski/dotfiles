@@ -1,0 +1,6 @@
+#!/bin/bash
+
+sudo pacman -Sy zsh zoxide
+
+git clone git@github.com:junegunn/fzf.git $HOME/personal/fzf
+$HOME/personal/fzf/install

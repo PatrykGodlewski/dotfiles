@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ -x .tmux-init ]]; then
+	./.tmux-init
+elif [[ -x ~/.tmux-init ]]; then
+	~/.tmux-init
+fi
+clear
