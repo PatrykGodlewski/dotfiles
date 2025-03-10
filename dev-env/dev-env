@@ -6,8 +6,6 @@ dry="0"
 while [[ $# > 0 ]]; do
   if [[ $1 == "--dry" ]]; then
     dry="1"
-  else
-    filter="$1"
   fi
   shift
 done
