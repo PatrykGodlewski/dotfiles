@@ -1,34 +1,21 @@
 #!/bin/bash
 
-# Variables
 FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip"
 TEMP_DIR="/tmp/fonts"
 FONT_NAME="JetBrainsMono"
-FONT_DEST_DIR="$HOME/.local/share/fonts"  # For user-specific fonts
-# FONT_DEST_DIR="/usr/share/fonts"       # For system-wide fonts (requires sudo)
+FONT_DEST_DIR="$HOME/.local/share/fonts"  
 
-# Step 1: Create a temporary directory
 mkdir -p "$TEMP_DIR"
 
-# Step 2: Download the font zip file
-echo "Downloading $FONT_NAME..."
 wget "$FONT_URL" -O "$TEMP_DIR/$FONT_NAME.zip"
 
-# Step 3: Extract the zip file
-echo "Extracting $FONT_NAME..."
 unzip "$TEMP_DIR/$FONT_NAME.zip" -d "$TEMP_DIR/$FONT_NAME"
 
-# Step 4: Copy the font files to the fonts directory
-echo "Copying fonts to $FONT_DEST_DIR..."
 mkdir -p "$FONT_DEST_DIR"
 cp "$TEMP_DIR/$FONT_NAME"/*.ttf "$FONT_DEST_DIR/"
 
-# Step 5: Reload the font cache
-echo "Reloading font cache..."
 fc-cache -fv
 
-# Step 6: Clean up temporary files
-echo "Cleaning up..."
 rm -rf "$TEMP_DIR"
 
-echo "Font installation complete!"
+

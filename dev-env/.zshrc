@@ -26,9 +26,9 @@ zinit light Aloxaf/fzf-tab
 zinit snippet OMZP::git
 zinit snippet OMZP::sudo
 zinit snippet OMZP::archlinux
-zinit snippet OMZP::aws
-zinit snippet OMZP::kubectl
-zinit snippet OMZP::kubectx
+# zinit snippet OMZP::aws
+# zinit snippet OMZP::kubectl
+# zinit snippet OMZP::kubectx
 zinit snippet OMZP::command-not-found
 
 # Load completions
@@ -38,7 +38,8 @@ zinit cdreplay -q
 
 # Oh my posh
 # eval "$(oh-my-posh --init --shell bash --config ~/.{theme}.omp.json)"
-# eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/base.json)"
+add_to_path "$HOME/.local/bin"
+eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/base.omp.json)"
 # Keybindings
 # bindkey -e
 # bindkey '^p' history-search-backward
