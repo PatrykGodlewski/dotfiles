@@ -1,0 +1,6 @@
+#!/bin/bash
+
+tmux rename-window dev
+tmux neww -n terminal
+tmux select-window -t dev
+nvim .
