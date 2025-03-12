@@ -3,7 +3,7 @@ add_to_path() {
       export PATH=$1:$PATH
    fi
 }
-source /usr/share/nvm/init-nvm.sh
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
@@ -76,6 +76,8 @@ alias dev-edit="nvim $HOME/projects/dotfiles"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 eval "$(zoxide init --cmd cd zsh)"
 
+# NVM integrations
+source /usr/share/nvm/init-nvm.sh
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -83,8 +85,16 @@ export NVM_DIR="$HOME/.nvm"
 # bun completions
 [ -s "/home/patryk/.bun/_bun" ] && source "/home/patryk/.bun/_bun"
 
-
 # bun
 export BUN_INSTALL="$HOME/.bun"
+
+# pnpm
+export PNPM_HOME="/home/patryk.godlewski/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+
 add_to_path "$BUN_INSTALL/bin"
 add_to_path "$HOME/.local/scripts"
