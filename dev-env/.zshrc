@@ -99,3 +99,4 @@ esac
 add_to_path "$BUN_INSTALL/bin"
 add_to_path "$HOME/.local/scripts"
 add_to_path "$HOME/personal/idea-UI/bin"
+add_to_path "/usr/local/go/bin"
