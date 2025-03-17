@@ -4,6 +4,7 @@ require("godlew.remaps")
 require("godlew.autocommands")
 
 require("lazy").setup({
+
   "tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
 
   -- NOTE: Plugins can also be added by using a table,
@@ -28,6 +29,32 @@ require("lazy").setup({
   -- options to `gitsigns.nvim`.
   --
   -- See `:help gitsigns` to understand what the configuration keys do
+  -- {
+  --   "zbirenbaum/copilot.lua",
+  --
+  --   opts = {
+  --     cmd = "Copilot",
+  --     event = "InsertEnter",
+  --     config = function()
+  --       require("copilot").setup({
+  --         suggestion = {
+  --           enabled = true,
+  --           auto_trigger = false,
+  --           hide_during_completion = false,
+  --           debounce = 25,
+  --           keymap = {
+  --             accept = false,
+  --             accept_word = false,
+  --             accept_line = "<Tab>",
+  --             next = false,
+  --             prev = false,
+  --             dismiss = false,
+  --           },
+  --         },
+  --       })
+  --     end,
+  --   },
+  -- },
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     "lewis6991/gitsigns.nvim",
     opts = {
