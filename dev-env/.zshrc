@@ -4,6 +4,28 @@ add_to_path() {
    fi
 }
 
+crop() {
+    local input_file="$1"
+    local output_file="${2:-cropped_output.mp4}"
+    
+    # Check if input file was provided
+    if [ -z "$input_file" ]; then
+        echo "Error: Input file not specified"
+        echo "Usage: crop input_file [output_file]"
+        return 1
+    fi
+    
+    # Check if input file exists
+    if [ ! -f "$input_file" ]; then
+        echo "Error: Input file '$input_file' not found"
+        return 1
+    fi
+    
+    ffmpeg -i "$input_file" -vf "crop=1920:880:0:200" -c:a copy "$output_file"
+    
+    echo "Cropped video saved as $output_file"
+}
+
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
@@ -71,6 +93,7 @@ alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
 alias dev-edit="nvim $HOME/projects/dotfiles"
+alias ts="tmux-sessionizer"
 
 # Shell integrations
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
