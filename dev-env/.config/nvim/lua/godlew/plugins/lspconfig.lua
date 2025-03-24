@@ -139,7 +139,18 @@ return {
       "eslint",
       "prettierd",
       "biome",
+      "bashls",
+      "docker_compose_language_service",
+      "dockerls",
+      "flake8",
+      "gitui",
+      "jsonls",
+      "markdown-toc",
+      "markdownlint-cli2",
+      "marksman",
+      "shfmt",
     })
+
     require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
 
     require("mason-lspconfig").setup({
