@@ -1,3 +1,7 @@
 [user]
 	email = 81991100+PatrykGodlewski@users.noreply.github.com
 	name = PatrykGodlewski
+[core]
+	editor = nvim
+[push]
+	autoSetupRemote = true

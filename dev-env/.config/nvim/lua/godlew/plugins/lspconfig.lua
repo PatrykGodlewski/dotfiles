@@ -116,8 +116,16 @@ return {
       --
 
       --
+      eslint = { settings = { quiet = true } },
       ts_ls = {},
-      tailwindcss = {},
+      tailwindcss = {
+        settings = {
+          tailwindCSS = {
+            classFunctions = { "tw", "clsx", "cn" },
+            classAttributes = { "className", "class", "slotsClassNames" },
+          },
+        },
+      },
       --
 
       --
@@ -136,7 +144,6 @@ return {
     local ensure_installed = vim.tbl_keys(servers or {})
     vim.list_extend(ensure_installed, {
       "stylua",
-      "eslint",
       "prettierd",
       "biome",
       "bashls",
