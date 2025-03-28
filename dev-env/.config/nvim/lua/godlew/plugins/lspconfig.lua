@@ -116,7 +116,7 @@ return {
       --
 
       --
-      eslint = { settings = { quiet = true } },
+      eslint = {},
       ts_ls = {},
       tailwindcss = {
         settings = {

@@ -20,10 +20,10 @@ return { -- Autoformat
     },
     formatters_by_ft = {
       lua = { "stylua" },
-      javascript = { "prettierd", "eslint_d", stop_after_first = true },
-      typescript = { "prettierd", "eslint_d", stop_after_first = true },
-      javascriptreact = { "prettierd", "eslint_d", stop_after_first = true },
-      typescriptreact = { "prettierd", "eslint_d", stop_after_first = true },
+      javascript = { "prettierd", "biome", stop_after_first = true },
+      typescript = { "prettierd", "biome", stop_after_first = true },
+      javascriptreact = { "prettierd", "biome", stop_after_first = true },
+      typescriptreact = { "prettierd", "biome", stop_after_first = true },
     },
   },
 }
