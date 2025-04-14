@@ -3,14 +3,22 @@ return {
   event = "VeryLazy",
   version = false, -- Never set this value to "*"! Never!
   opts = {
-    provider = "ollama",
-    behaviour = {
-      enable_cursor_planning_mode = true, -- enable cursor planning mode!
+    provider = "gemini",
+    gemini = {
+      model = "gemini-2.5-pro-exp-03-25",
     },
-    ollama = {
-      endpoint = "http://127.0.0.1:11434", -- Note that there is no /v1 at the end.
-      model = "qwen2.5-coder:latest",
-    },
+
+    ------ LOCAL LLM SETUP ------
+    -- provider = "ollama",
+    -- behaviour = {
+    --   enable_cursor_planning_mode = true, -- enable cursor planning mode!
+    -- },
+    -- ollama = {
+    --   endpoint = "http://127.0.0.1:11434", -- Note that there is no /v1 at the end.
+    --   model = "qwen2.5-coder:latest",
+    -- },
+    ------ LOCAL LLM SETUP ------/
+
     -- add any opts here
     -- for example
     -- provider = "claude",
