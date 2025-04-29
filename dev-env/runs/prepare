@@ -1,4 +1,7 @@
 #!/bin/bash
 
-sudo pacman -Sy bluetuith waybar bluez bluez-utils wl-clipboard tmux git
+sudo pacman -Sy waybar bluez bluez-utils wl-clipboard tmux git
+
+# DO NOT WORK SHOULD BE CHECKED # sudo pacman -Sy bluetuith
+
 systemctl enable bluetooth

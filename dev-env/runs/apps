@@ -1,0 +1,9 @@
+#!/bin/bash
+
+sudo pacman -S --needed git base-devel
+git clone https://aur.archlinux.org/yay.git ~/personal
+cd ~/personal/yay
+makepkg -si
+
+sudo pacman -Sy discord
+sudo yay -Sy spotube-bin
