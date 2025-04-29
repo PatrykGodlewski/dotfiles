@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo pacman -Sy waybar bluez bluez-utils wl-clipboard tmux git less
+sudo pacman -Sy waybar bluez bluez-utils wl-clipboard tmux git less man
 
 # DO NOT WORK SHOULD BE CHECKED # sudo pacman -Sy bluetuith
 
