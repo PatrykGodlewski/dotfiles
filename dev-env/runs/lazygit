@@ -1,0 +1,5 @@
+#!/bin/bash
+
+git clone https://github.com/jesseduffield/lazygit.git $HOME/personal/lazygit
+cd $HOME/personal/lazygit
+go install
