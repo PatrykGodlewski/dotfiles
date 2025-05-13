@@ -6,4 +6,4 @@ cd ~/personal/yay
 makepkg -si
 
 sudo pacman -Sy discord
-sudo yay -Sy spotube-bin
+sudo yay -Sy spotube-bin hyprshot
