@@ -14,7 +14,7 @@ return {
   ---@type neotree.Config?
   opts = {
     window = {
-      position = "right",
+      position = "float",
     },
     filesystem = {
       window = {

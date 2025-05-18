@@ -4,9 +4,9 @@ return {
   version = false, -- Never set this value to "*"! Never!
   opts = {
     provider = "gemini",
-    gemini = {
-      model = "gemini-2.5-pro-exp-03-25",
-    },
+    -- gemini = {
+    --   model = "gemini-2.5-pro-exp-03-25",
+    -- },
 
     ------ LOCAL LLM SETUP ------
     -- provider = "ollama",
