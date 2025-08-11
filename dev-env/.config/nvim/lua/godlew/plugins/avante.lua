@@ -7,6 +7,9 @@ return {
     -- gemini = {
     --   model = "gemini-2.5-pro-exp-03-25",
     -- },
+    behaviour = {
+      enable_cursor_planning_mode = true, -- enable cursor planning mode!
+    },
 
     ------ LOCAL LLM SETUP ------
     -- provider = "ollama",
