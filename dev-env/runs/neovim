@@ -1,8 +1,9 @@
 #!/bin/bash
 
+rm -rf $HOME/personal/neovim
 git clone --depth=1 https://github.com/neovim/neovim.git $HOME/personal/neovim
 sudo pacman -S cmake base-devel ninja curl
-sudo pacman -S --noconfirm --needed gcc make git ripgrep fd unzip 
+sudo pacman -S --noconfirm --needed gcc make git ripgrep fd unzip
 
 cd $HOME/personal/neovim
 make CMAKE_BUILD_TYPE=RelWithDebInfo
