@@ -113,6 +113,10 @@ case ":$PATH:" in
 esac
 # pnpm end
 
+export VISUAL="nvim"
+export EDITOR="nvim"
+export GIT_EDITOR="nvim"
+
 add_to_path "$BUN_INSTALL/bin"
 add_to_path "$HOME/.local/scripts"
 add_to_path "$HOME/personal/idea-UI/bin"
