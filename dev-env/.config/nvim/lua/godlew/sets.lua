@@ -30,3 +30,6 @@ vim.opt.inccommand = "split"
 vim.opt.cursorline = true
 vim.opt.scrolloff = 10
 vim.opt.laststatus = 3
+
+vim.opt.textwidth = 120 -- Hard wrap at 120 characters
+vim.opt.colorcolumn = "120" -- Visual guide for the wrap limit
