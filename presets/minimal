@@ -1,0 +1,6 @@
+# Shell + editor only (servers, containers)
+git
+bash
+zsh
+tmux
+neovim

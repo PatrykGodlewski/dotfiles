@@ -1,0 +1,6 @@
+# Full terminal dev environment (WSL, Ubuntu, any machine without a desktop)
+@minimal
+lazygit
+bun
+volta
+secrets

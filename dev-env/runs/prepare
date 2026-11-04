@@ -1,7 +1,0 @@
-#!/bin/bash
-
-sudo pacman -Syu waybar bluez bluez-utils wl-clipboard tmux git less man uwsm otf-font-awesome waybar sway
-
-# DO NOT WORK SHOULD BE CHECKED # sudo pacman -Sy bluetuith
-
-systemctl enable bluetooth
