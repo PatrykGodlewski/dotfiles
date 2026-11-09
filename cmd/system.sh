@@ -122,18 +122,20 @@ cmd_menu() {
       "new"$'\t'"Create a new module" \
       "adopt"$'\t'"Move an existing config into a module" \
       "prune"$'\t'"Uninstall packages no longer needed" \
-      "update"$'\t'"git pull + apply" \
+      "update"$'\t'"git pull, refresh copied configs, re-apply" \
       "doctor"$'\t'"Check the environment" \
       "quit"$'\t'"") || break
-    case $choice in
-      quit | '') break ;;
-      adopt)
-        local p; p=$(ui_input "Path to adopt (e.g. ~/.config/foo)")
-        [[ -n $p ]] && cmd_adopt "${p/#\~/$HOME}"
-        ;;
-      *) "cmd_$choice" ;;
-    esac
+    [[ $choice == quit ]] && break
+    # subshell: a command that fails (die/exit) returns here instead of
+    # ending the menu
+    (
+      if [[ $choice == adopt ]]; then
+        p=$(ui_input "Path to adopt (e.g. ~/.config/foo)")
+        [[ -z $p ]] || cmd_adopt "${p/#\~/$HOME}"
+      else
+        "cmd_$choice"
+      fi
+    ) || true
     printf '\n'
-    ui_confirm "Back to menu?" || break
   done
 }

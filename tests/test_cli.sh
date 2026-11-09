@@ -366,3 +366,19 @@ test_configs_needs_targets_when_not_interactive() {
   dotx configs --copy --all --yes; assert_ok
   assert_file "$HOME/.zshrc"
 }
+
+test_menu_returns_without_asking_and_survives_failures() {
+  DOT_OMARCHY=0; export DOT_OMARCHY
+  mkmod a <<<''
+  # a failing command ("no configs found" → die) must not end the menu:
+  # 1 = configs → 3 = remove → dies; then 3 = status; then input ends → menu exits
+  doti $'1\n3\n3' menu; assert_ok
+  assert_contains "$OUT" "no configs found"
+  assert_contains "$OUT" "dot status"
+  assert_not_contains "$OUT" "Back to menu"
+  # normal flow: configs → remove → nothing to do → straight back to the menu
+  mkhome a .zshrc
+  doti $'1\n3\n14' menu; assert_ok
+  assert_contains "$OUT" "Nothing to do"
+  assert_eq 2 "$(grep -c '^dot — ' <<<"$OUT")" "menu shown again right after the command"
+}
