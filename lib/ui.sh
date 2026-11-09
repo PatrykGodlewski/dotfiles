@@ -38,7 +38,7 @@ _ui_line() {
   local name=${1%%$'\t'*} desc=''
   [[ $1 == *$'\t'* ]] && desc=${1#*$'\t'}
   desc=${desc//,/;}
-  printf '%-14s %s' "$name" "$desc"
+  printf "%-${UI_NAME_W:-14}s %s" "$name" "$desc"
 }
 
 # ui_choose_one "Header" item...

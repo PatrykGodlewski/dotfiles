@@ -326,3 +326,43 @@ EOF2
   assert_file "$HOME/setup-finished"
   assert_line "$FAKE_LOG" "ensure tricky"
 }
+
+test_configs_copy_creates_real_copies_without_packages() {
+  mkmod a <<<'PKGS=(x)'
+  mkhome a .zshrc
+  mkhome a .config/foo/cfg "v1"
+  dotx configs --copy --yes a; assert_ok
+  assert_file "$HOME/.zshrc"
+  [[ ! -L $HOME/.config/foo && -f $HOME/.config/foo/cfg ]] || _fail "expected a real copy of ~/.config/foo"
+  assert_eq "" "$(cat "$FAKE_DB")" "configs must not install packages"
+  assert_no_file "$SEL"
+}
+
+test_configs_copy_updates_and_backs_up_changed() {
+  mkmod a <<<''
+  mkhome a .config/foo/cfg "v1"
+  dotx configs --copy --yes a; assert_ok
+  dotx configs --copy --yes a; assert_ok
+  assert_contains "$OUT" "Nothing to do"
+  mkhome a .config/foo/cfg "v2"
+  dotx configs --copy --yes a; assert_ok
+  assert_eq "v2" "$(cat "$HOME/.config/foo/cfg")"
+  assert_eq "v1" "$(cat "$HOME"/.local/state/dotfiles/backups/*/.config/foo/cfg)" "old copy backed up"
+}
+
+test_configs_link_mode_and_path_targets() {
+  mkmod a <<<''
+  mkhome a .zshrc
+  mkhome a .config/foo/cfg
+  dotx configs --link --yes "$HOME/.config/foo"; assert_ok
+  assert_link "$HOME/.config/foo" "$R/modules/a/home/.config/foo"
+  assert_no_file "$HOME/.zshrc"
+}
+
+test_configs_needs_targets_when_not_interactive() {
+  mkmod a <<<''
+  mkhome a .zshrc
+  dotx configs --copy --yes; assert_rc_fail "no targets"
+  dotx configs --copy --all --yes; assert_ok
+  assert_file "$HOME/.zshrc"
+}

@@ -3,21 +3,43 @@
 My configs and tools, managed by **`dot`**, a small interactive bash CLI.
 It installs packages and links configs on **Arch-based** distros (Arch, EndeavourOS, Manjaro…) and **Debian/Ubuntu-based** ones (incl. WSL).
 
-## Fresh machine
+## Install (new or existing machine)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dotfiles/main/install.sh | bash
 ```
 
-This installs git + curl, clones the repo to `~/projects/dotfiles`, puts `dot` in `~/.local/bin`, installs the `core` module (incl. [gum](https://github.com/charmbracelet/gum) for the UI), then opens the `dot` menu.
-Choose **preset**, then adjust the module list and confirm.
+It installs git + curl if they're missing, clones the repo to `~/Projects/dotfiles` (or reuses an existing clone there or in `~/projects/dotfiles`), and links `dot` into `~/.local/bin`.
+It also puts `~/.local/bin` at the **front** of PATH in `~/.bashrc` / `~/.zshrc`, because graphviz ships its own `/usr/bin/dot`.
+Then it asks what to do:
 
-Overrides: `DOTFILES_DIR=… DOTFILES_BRANCH=… DOT_NO_MENU=1 bash install.sh`
+| Mode | What happens |
+|---|---|
+| `configs` (default) | pick which configs to **copy** or **link** into `$HOME`; no packages are installed |
+| `full` | install the `core` module (gum, build tools), then open the `dot` menu |
+| `none` | only install the `dot` command |
+
+Skip the question with `curl … | bash -s -- configs` (or `full` / `none`).
+Overrides: `DOTFILES_DIR=… DOTFILES_BRANCH=… DOT_NO_MENU=1 bash install.sh`. In shells that were already open, run `exec $SHELL -l` afterwards.
+
+## Copying configs to this machine
+
+```bash
+dot configs                 # choose copy or link, then tick the configs you want
+dot configs --copy          # real copies; run again later to update the changed ones
+dot configs --link          # symlinks into the repo; `git pull` updates them
+dot configs --copy kitty ~/.config/nvim --yes   # non-interactive: modules or paths
+dot configs -n --copy --all # dry run over everything
+```
+
+Configs that are already up to date aren't listed. Anything already at a target is moved to `~/.local/state/dotfiles/backups/<time>/`, never deleted.
+`dot configs` never installs packages and doesn't change which modules are selected on this machine.
 
 ## Everyday use
 
 ```bash
 dot                 # interactive menu
+dot configs         # pick configs to copy / link (no packages)
 dot status          # what's selected / installed / linked
 dot plan            # dry run: every package, link, backup and script that would run
 dot plan -v neovim  #   …including the code of custom setup() steps
@@ -124,7 +146,7 @@ tests/run.sh --docker   # + full bootstrap in fresh Ubuntu and Arch containers
 Each test gets a throwaway `$HOME` and a copy of `dot` with **fake package managers**. Installs are recorded in a file, and a fake `/etc/os-release` lets the tests act as Arch or Ubuntu.
 What's covered:
 - **Unit:** OS detection, the linking rules, presets and dependency resolution
-- **CLI:** apply, plan, dry-run, remove, prune, adopt, new, status
+- **CLI:** apply, plan, dry-run, remove, prune, adopt, new, status, configs
 - **Repo integrity:** every module loads on both distros, presets reference real modules, managers implement the interface, no two modules link the same path
 
 Write new tests in `tests/test_*.sh` as `test_<name>()` functions. The helpers (`mkmod`, `mkhome`, `dotx`, `assert_*`) are in `tests/lib.sh`.

@@ -35,7 +35,9 @@ ${C_BOLD}Usage:${C_RESET} dot [command] [args] [-n|--dry-run] [-y|--yes] [-v|--v
   ${C_CYAN}new${C_RESET} [name]           scaffold a new module (asks for packages / configs)
   ${C_CYAN}adopt${C_RESET} <path> [module] move an existing config (e.g. ~/.config/foo) into a module and link it
   ${C_CYAN}edit${C_RESET} [module]        open a module definition in \$EDITOR
-  ${C_CYAN}link${C_RESET} / ${C_CYAN}unlink${C_RESET} [modules]  only (un)link configs, no packages
+  ${C_CYAN}configs${C_RESET} [--copy|--link] [modules|paths]
+                       pick configs to copy or link into \$HOME (no packages)
+  ${C_CYAN}link${C_RESET} / ${C_CYAN}unlink${C_RESET} [modules]  only (un)link whole modules' configs, no packages
   ${C_CYAN}update${C_RESET}               git pull the dotfiles repo, then apply
   ${C_CYAN}doctor${C_RESET}               check the environment
 
@@ -322,6 +324,101 @@ cmd_unlink() {
   for n in "${t[@]}"; do mod_exists "$n" && mod_unlink "$n"; done
 }
 
+# dot configs [--copy|--link] [--all] [module | ~/path ...]
+# Pick individual config entries and copy or link them into $HOME.
+# Never installs packages and never changes the machine's module selection.
+cmd_configs() {
+  local mode='' all=0 a
+  local -a want=()
+  for a in "$@"; do
+    case $a in
+      --copy) mode=copy ;;
+      --link) mode=link ;;
+      --all) all=1 ;;
+      *) want+=("${a/#\~/$HOME}") ;;
+    esac
+  done
+
+  if [[ -z $mode ]]; then
+    if ui_interactive && [[ $DOT_YES != 1 ]]; then
+      mode=$(ui_choose_one "How should configs be put in place?" \
+        "copy"$'\t'"real copies (independent of the repo; run 'dot configs' again to update)" \
+        "link"$'\t'"symlinks into the repo (git pull updates them; edits land in the repo)") ||
+        { info "Cancelled."; return 1; }
+    else
+      mode=link
+    fi
+  fi
+
+  # every config entry of every supported module, filtered by targets
+  local -A src_of=() mod_of=() st_of=()
+  local -a order=()
+  local n src dst key w hit width=14
+  for n in $(mod_all); do
+    mod_load "$n"
+    mod_supported >/dev/null || continue
+    while IFS=$'\t' read -r src dst; do
+      [[ -z $src ]] && continue
+      if ((${#want[@]})); then
+        hit=0
+        for w in "${want[@]}"; do [[ $w == "$n" || ${w%/} == "$dst" ]] && hit=1; done
+        ((hit)) || continue
+      fi
+      key=$(pretty "$dst")
+      src_of[$key]=$src mod_of[$key]=$n st_of[$key]=$(link_state "$src" "$dst")
+      order+=("$key")
+      ((${#key} + 2 > width)) && width=$((${#key} + 2))
+    done < <(links_of "$n")
+  done
+  ((${#order[@]})) || die "no configs found${want:+ for: ${want[*]}}"
+
+  local -a items=() pending=()
+  local done_n=0
+  for key in "${order[@]}"; do
+    if config_done "$mode" "${st_of[$key]}"; then
+      done_n=$((done_n + 1))
+      continue
+    fi
+    pending+=("$key")
+    items+=("$key"$'\t'"${mod_of[$key]} · $(config_label "$mode" "${st_of[$key]}")")
+  done
+  ((done_n)) && info "$done_n config(s) already $([[ $mode == copy ]] && echo "up to date" || echo linked)"
+  ((${#pending[@]})) || { ok "Nothing to do."; return 0; }
+
+  local -a chosen=()
+  if ((all || ${#want[@]})); then
+    chosen=("${pending[@]}")
+  elif ui_interactive; then
+    local verb=Copy; [[ $mode == link ]] && verb=Link
+    mapfile -t chosen < <(UI_NAME_W=$width ui_choose_many \
+      "$verb which configs? (space = toggle, enter = confirm; existing files are backed up)" "" "${items[@]}") ||
+      { info "Cancelled."; return 1; }
+  else
+    die "not a terminal: pass modules / paths, or --all (e.g. dot configs --copy --yes kitty)"
+  fi
+  ((${#chosen[@]})) || { info "Nothing chosen."; return 0; }
+
+  header "configs ($mode)"
+  local sym
+  for key in "${chosen[@]}"; do
+    case ${st_of[$key]} in missing) sym=+ ;; *) sym='!' ;; esac
+    printf '  %s %-*s %s%s%s\n' "$(_sym "$sym")" "$width" "$key" "$C_DIM" "$(config_label "$mode" "${st_of[$key]}")" "$C_RESET"
+  done
+  [[ $DOT_DRY == 1 ]] || ui_confirm "${mode^} ${#chosen[@]} config(s)?" || { info "Cancelled."; return 1; }
+
+  local failed=0
+  for key in "${chosen[@]}"; do
+    src=${src_of[$key]} dst=${key/#\~/$HOME}
+    if "${mode}_apply" "$src" "$dst"; then
+      [[ $DOT_DRY == 1 ]] || ok "$([[ $mode == copy ]] && echo copied || echo linked) $key"
+    else
+      err "failed: $key"; failed=$((failed + 1))
+    fi
+  done
+  [[ -d $BACKUP_DIR ]] && info "backups: $(pretty "$BACKUP_DIR")"
+  ((failed == 0))
+}
+
 new_module() { # new_module name desc pkgs pacman apt  -> creates files
   local name=$1 desc=$2 pkgs=$3 pac=$4 apt=$5
   local dir="$DOT_ROOT/modules/$name"
@@ -453,6 +550,7 @@ cmd_menu() {
   local choice
   while true; do
     choice=$(ui_choose_one "dot — $(os_summary)" \
+      "configs"$'\t'"Pick configs to copy or link (no packages)" \
       "status"$'\t'"What is selected / installed / linked" \
       "preset"$'\t'"Start from a preset (desktop / headless / ...)" \
       "select"$'\t'"Choose modules for this machine" \
@@ -507,6 +605,7 @@ main() {
     new) cmd_new "$@" ;;
     adopt | add) cmd_adopt "$@" ;;
     edit) cmd_edit "$@" ;;
+    configs | cfg) cmd_configs "$@" ;;
     link) cmd_link "$@" ;;
     unlink) cmd_unlink "$@" ;;
     update | up) cmd_update ;;

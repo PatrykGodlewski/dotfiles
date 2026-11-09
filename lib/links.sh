@@ -76,3 +76,36 @@ link_remove() {
   local src=$1 dst=$2
   if [[ -L $dst && $(readlink "$dst") == "$src" ]]; then run rm "$dst"; fi
 }
+
+# copy_apply <src> <dst>: install a real copy instead of a symlink.
+# Identical copies are left alone; anything else at dst is backed up first.
+copy_apply() {
+  local src=$1 dst=$2 st
+  st=$(link_state "$src" "$dst")
+  case $st in
+    same) return 0 ;;
+    conflict | ok | foreign) _backup "$dst" || return 1 ;;
+  esac
+  run mkdir -p "$(dirname "$dst")" && run cp -a "$src" "$dst"
+}
+
+# config_done <mode> <state>: true when nothing needs to happen
+config_done() {
+  case $1:$2 in
+    link:ok | copy:same) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# config_label <mode> <state>: short human description for pickers / plans
+config_label() {
+  case $1:$2 in
+    *:missing) echo "new" ;;
+    link:ok) echo "linked" ;;
+    copy:same) echo "up to date" ;;
+    link:same) echo "identical copy → link" ;;
+    copy:ok) echo "symlink → replace with copy" ;;
+    *:conflict) echo "differs → backup + replace" ;;
+    *:foreign) echo "other symlink → backup + replace" ;;
+  esac
+}

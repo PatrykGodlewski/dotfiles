@@ -60,7 +60,8 @@ zinit cdreplay -q
 
 # Oh my posh
 # eval "$(oh-my-posh --init --shell bash --config ~/.{theme}.omp.json)"
-add_to_path "$HOME/.local/bin"
+# first, so `dot` is not shadowed by graphviz's /usr/bin/dot
+case ":$PATH:" in ":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac
 eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/base.omp.json)"
 # Keybindings
 # bindkey -e
