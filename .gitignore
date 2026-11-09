@@ -1,2 +1,5 @@
 # if ~/.config/helix is ever adopted, its runtime link points outside the repo
 modules/*/home/.config/helix/runtime
+
+# omazed generates the Zed theme from the current Omarchy theme
+modules/*/home/.config/zed/themes/
