@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end: fresh container -> install.sh -> dot apply @minimal -> verify.
+# End-to-end: fresh container -> install.sh -> dot bootstrap -> dot apply @minimal -> verify.
 # Uses the working tree (uncommitted changes included). Needs docker.
 #   tests/docker-e2e.sh ubuntu:24.04
 #   tests/docker-e2e.sh archlinux:latest
@@ -15,8 +15,9 @@ cp -r /src /tmp/repo && cd /tmp/repo &&
   git -c user.email=t@t -c user.name=t commit -qm wip >/dev/null && git branch -M main
 cd ~
 echo "existing" > ~/.gitconfig
-DOT_NO_MENU=1 DOTFILES_REPO=/tmp/repo bash /tmp/repo/install.sh >/tmp/install.log 2>&1 || { tail -30 /tmp/install.log; exit 1; }
+bash /tmp/repo/install.sh >/tmp/install.log 2>&1 || { tail -30 /tmp/install.log; exit 1; }
 export PATH="$HOME/.local/bin:$PATH"
+dot bootstrap </dev/null >>/tmp/install.log 2>&1 || { tail -30 /tmp/install.log; exit 1; }
 command -v gum >/dev/null || { echo "FAIL: gum missing after bootstrap"; exit 1; }
 dot apply @minimal --yes >/tmp/apply.log 2>&1 || { tail -40 /tmp/apply.log; exit 1; }
 nvim --version | head -1 | grep -q "NVIM v0.1[1-9]" || { echo "FAIL: nvim version"; exit 1; }

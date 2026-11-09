@@ -3,24 +3,24 @@
 My configs and tools, managed by **`dot`**, a small interactive bash CLI.
 It installs packages and links configs on **Arch-based** distros (Arch, EndeavourOS, Manjaro…) and **Debian/Ubuntu-based** ones (incl. WSL).
 
-## Install (new or existing machine)
+## Install
 
 ```bash
+git clone https://github.com/PatrykGodlewski/dotfiles ~/Projects/dotfiles
+~/Projects/dotfiles/install.sh
+# or, once the clone exists:
 curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dotfiles/main/install.sh | bash
 ```
 
-It installs git + curl if they're missing, clones the repo to `~/Projects/dotfiles` (or reuses an existing clone there or in `~/projects/dotfiles`), and links `dot` into `~/.local/bin`.
-It also puts `~/.local/bin` at the **front** of PATH in `~/.bashrc` / `~/.zshrc`, because graphviz ships its own `/usr/bin/dot`.
-Then it asks what to do:
+The installer only installs the `dot` command. It links `~/.local/bin/dot` to your clone (the one it runs from, else `$DOTFILES_DIR`, `~/Projects/dotfiles` or `~/projects/dotfiles`) and puts `~/.local/bin` at the **front** of PATH in `~/.bashrc` / `~/.zshrc`, because graphviz ships its own `/usr/bin/dot`.
+It doesn't clone, pull, install packages or touch configs. Then:
 
-| Mode | What happens |
-|---|---|
-| `configs` (default) | pick which configs to **copy** or **link** into `$HOME`; no packages are installed |
-| `full` | install the `core` module (gum, build tools), then open the `dot` menu |
-| `none` | only install the `dot` command |
+```bash
+dot configs    # copy / link the configs you pick (no packages)
+dot            # menu: presets, modules, Omarchy, sync, …
+```
 
-Skip the question with `curl … | bash -s -- configs` (or `full` / `none`).
-Overrides: `DOTFILES_DIR=… DOTFILES_BRANCH=… DOT_NO_MENU=1 bash install.sh`. In shells that were already open, run `exec $SHELL -l` afterwards.
+Without gum, `dot` uses plain prompts; `dot apply core` installs gum and base tools.
 
 ## Copying configs to this machine
 
@@ -132,7 +132,7 @@ dot                 entry point: flags, help, command dispatch
 cmd/                one file per command group (defines cmd_*)
 lib/                reusable logic: os, ui, managers, state, links, modules,
                     profile (Omarchy profile file), omarchy (adapters), sync
-install.sh          bootstrap (the curl one-liner)
+install.sh          installs the `dot` command (link + PATH), nothing else
 managers/           package managers: pacman apt aur cargo flatpak services
 modules/<name>/
   module.sh         what to install (packages + optional hooks)
