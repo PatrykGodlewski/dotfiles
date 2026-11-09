@@ -35,7 +35,9 @@ Without gum, `dot` uses plain prompts; `dot apply core` installs gum and base to
 dot configs                 # choose copy / link / remove, then tick the configs
 dot configs --copy          # real copies
 dot configs --link          # symlinks into the repo; `git pull` updates them
-dot configs --remove        # take configs dot put here away again (backed up first)
+dot configs --remove        # remove configs (backed up first); naming one, e.g.
+                            #   `dot configs --remove kitty`, also takes a file dot didn't install
+                            #   (--all only ever removes what dot installed)
 dot configs --copy kitty ~/.config/nvim --yes   # non-interactive: modules or paths
 dot configs -n --copy --all # dry run over everything
 ```

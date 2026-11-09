@@ -50,6 +50,10 @@ cmd_configs() {
 
   # entries of every supported module, filtered by targets
   local -a CFG_KEYS=() CFG_SRC=() CFG_MOD=() CFG_STATE=() # read by the _cfg_* helpers
+  # remove may take files dot didn't install only when you name them or pick
+  # them yourself — never with --all
+  local CFG_UNMANAGED_OK=0
+  if ((${#want[@]})) || { ((all == 0)) && ui_interactive && [[ $DOT_YES != 1 ]]; }; then CFG_UNMANAGED_OK=1; fi
   local n src dst w hit width=14
   for n in $(mod_all); do
     mod_load "$n"
@@ -120,14 +124,22 @@ _cfg_candidate() {
   case $1 in
     link) [[ $st != ok ]] ;;
     copy) [[ $st != same ]] ;;
-    remove) [[ $st == ok ]] || { [[ $st == same || $st == conflict ]] && _cfg_is_copy "$2"; } ;;
+    remove)
+      [[ $st == ok ]] && return 0                       # our link
+      [[ $st == same || $st == conflict ]] || return 1  # missing, or someone else's symlink
+      _cfg_is_copy "$2" && return 0                     # our copy
+      ((CFG_UNMANAGED_OK))                              # not ours: only when asked for by name / picked
+      ;;
   esac
 }
 
 _cfg_label() {
   local st=${CFG_STATE[$2]}
   if [[ $1 == remove ]]; then
-    case $st in ok) echo "linked → unlink" ;; same) echo "copy → back up + remove" ;; *) echo "edited copy → back up + remove" ;; esac
+    if [[ $st == ok ]]; then echo "linked → unlink"
+    elif ! _cfg_is_copy "$2"; then echo "not installed by dot → back up + remove"
+    elif [[ $st == same ]]; then echo "copy → back up + remove"
+    else echo "edited copy → back up + remove"; fi
     return
   fi
   config_label "$1" "$st"

@@ -364,14 +364,43 @@ test_configs_remove_copies_and_links() {
   assert_eq "" "$(cat "$HOME/.local/state/dotfiles/copies")"
 }
 
-test_configs_remove_leaves_unmanaged_files_alone() {
+test_configs_remove_unmanaged_only_when_named() {
+  DOT_OMARCHY=0; export DOT_OMARCHY
+  mkmod a <<<''
+  mkhome a .zshrc
+  mkhome a .config/foo/cfg
+  echo mine >"$HOME/.zshrc"
+  mkdir -p "$HOME/.config/foo"; echo mine >"$HOME/.config/foo/cfg"
+  ln -s /elsewhere "$HOME/.bashrc_unrelated"
+  dotx configs --remove --all --yes; assert_ok
+  assert_contains "$OUT" "Nothing to do"          # --all never takes files dot didn't install
+  assert_eq mine "$(cat "$HOME/.zshrc")"
+  dotx configs --remove --yes a; assert_ok        # named: back up + remove
+  assert_contains "$OUT" "not installed by dot → back up + remove"
+  assert_no_file "$HOME/.zshrc"
+  assert_no_file "$HOME/.config/foo"
+  assert_eq mine "$(cat "$HOME"/.local/state/dotfiles/backups/*/.zshrc)"
+  assert_eq mine "$(cat "$HOME"/.local/state/dotfiles/backups/*/.config/foo/cfg)"
+}
+
+test_configs_remove_skips_foreign_symlinks() {
+  DOT_OMARCHY=0; export DOT_OMARCHY
+  mkmod a <<<''
+  mkhome a .zshrc
+  ln -s /somewhere/else "$HOME/.zshrc"
+  dotx configs --remove --yes a; assert_ok
+  assert_contains "$OUT" "Nothing to do"
+  [[ -L $HOME/.zshrc ]] || _fail "someone else's symlink must stay"
+}
+
+test_configs_remove_interactive_lists_unmanaged() {
   DOT_OMARCHY=0; export DOT_OMARCHY
   mkmod a <<<''
   mkhome a .zshrc
   echo mine >"$HOME/.zshrc"
-  dotx configs --remove --yes a; assert_ok
-  assert_contains "$OUT" "Nothing to do"
-  assert_eq mine "$(cat "$HOME/.zshrc")"
+  doti $'1\n\ny' configs --remove; assert_ok
+  assert_no_file "$HOME/.zshrc"
+  assert_eq mine "$(cat "$HOME"/.local/state/dotfiles/backups/*/.zshrc)"
 }
 
 test_ui_pick_many_reports_cancel() {
