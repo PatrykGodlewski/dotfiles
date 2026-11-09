@@ -2,12 +2,21 @@
 
 My configs and apps, managed by [dot](https://github.com/PatrykGodlewski/dot).
 
+## Set up a machine
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dot/main/install.sh | bash
-git clone https://github.com/PatrykGodlewski/dotfiles ~/Projects/dotfiles   # dot finds it there
-dot configs      # copy / link the configs I want on this machine
-dot              # everything else: presets, modules, Omarchy, sync
+curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dot/main/install.sh | bash -s -- --repo https://github.com/PatrykGodlewski/dotfiles --dir ~/Projects/dotfiles
 ```
+
+This installs dot, clones this repo to `~/Projects/dotfiles` and starts `dot setup`, which asks:
+1. **copy or link**: how configs go on this machine
+2. **apps**: which modules to install (each comes with its configs)
+3. **more configs**: configs to add without installing their apps
+4. **Omarchy profile** (on Omarchy): which defaults / installers / removals to run
+
+Pick nothing to skip a step. Nothing changes without a confirmation.
+
+Later: `dot` (menu), `dot sync` (record what changed on this machine), `dot update` (pull + refresh).
 
 ## What's here
 
@@ -18,6 +27,6 @@ dot              # everything else: presets, modules, Omarchy, sync
 
 Notes:
 - On Omarchy, `hyprland` is skipped: Omarchy manages its own Hyprland setup.
-- The `bash` module replaces `~/.bashrc`. Omarchy's own `.bashrc` loads Omarchy's environment and defaults, so don't link it there.
+- `bash` loads Omarchy's own shell setup first when it runs on Omarchy, and only switches to zsh elsewhere.
 
 Check the repo with `dot check`.
