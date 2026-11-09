@@ -16,9 +16,9 @@ test_repo_modules_load_on_every_os() {
   local os m
   for os in arch ubuntu; do
     use_os "$os"
-    DOT_ROOT=$REPO
+    DOT_ROOT=$REPO DOT_HOME=$REPO
     (
-      export DOT_ROOT=$REPO
+      export DOT_ROOT=$REPO DOT_HOME=$REPO
       for f in core os ui managers state links modules github; do source "$REPO/lib/$f.sh"; done
       detect_os; managers_load
       for m in $(_real_modules); do
@@ -66,7 +66,7 @@ test_repo_managers_implement_interface() {
 test_repo_no_conflicting_link_targets() {
   # two modules must never link the same path in $HOME
   load_libs
-  DOT_ROOT=$REPO
+  DOT_ROOT=$REPO DOT_HOME=$REPO
   local m dupes
   dupes=$(for m in $(_real_modules); do links_of "$m" | cut -f2; done | sort | uniq -d)
   assert_eq "" "$dupes" "linked by more than one module:"

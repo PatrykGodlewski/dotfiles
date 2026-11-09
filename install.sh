@@ -1,41 +1,55 @@
 #!/usr/bin/env bash
-# Install the `dot` command from your dotfiles clone. Nothing else: no
-# cloning, no pulling, no packages, no configs.
+# Install the `dot` tool — nothing else (no clone, no packages, no configs):
 #
-#   ~/Projects/dotfiles/install.sh        # run from the clone, or:
 #   curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dotfiles/main/install.sh | bash
-#     (uses $DOTFILES_DIR, ~/Projects/dotfiles or ~/projects/dotfiles)
 #
-# Links ~/.local/bin/dot -> <clone>/dot and makes sure ~/.local/bin comes
-# first in PATH (graphviz ships its own /usr/bin/dot).
+#   ~/.local/bin/dot          the command
+#   ~/.local/share/dot/       its files (lib/ cmd/ managers/ templates/)
+#
+# Your dotfiles repo is separate: clone it wherever you like; dot finds
+# ~/Projects/dotfiles (and a few other places) itself, or run `dot repo <path>`.
+# Running this again updates the tool (same as `dot self-update`).
+#
+# Env: DOT_REF=<branch|tag> (default main)
+#      DOT_SOURCE=<dir|tar.gz> install from a local copy instead of GitHub
+#
 # Everything is inside main() so a partially downloaded script never runs.
 
 main() {
   set -euo pipefail
+  local ref=${DOT_REF:-main} src=${DOT_SOURCE:-}
+  local url="https://github.com/PatrykGodlewski/dotfiles/archive/refs/heads/$ref.tar.gz"
+  local bin="$HOME/.local/bin" share="${XDG_DATA_HOME:-$HOME/.local/share}/dot"
+  local tmp part
+  fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
-  is_clone() { [[ -n $1 && -x $1/dot && -d $1/lib ]]; }
-
-  local dir='' d rc marker script
-  script=${BASH_SOURCE[0]:-}
-  [[ -f $script ]] && dir=$(cd "$(dirname "$script")" && pwd) # run from a clone
-  if ! is_clone "$dir"; then                                  # piped through curl
-    dir=''
-    for d in "${DOTFILES_DIR:-}" "$HOME/Projects/dotfiles" "$HOME/projects/dotfiles"; do
-      is_clone "$d" && { dir=$d; break; }
-    done
+  tmp=$(mktemp -d)
+  # shellcheck disable=SC2064 # expand now: the trap runs after main's locals are gone
+  trap "rm -rf '$tmp'" EXIT
+  if [[ -z $src ]]; then
+    command -v curl >/dev/null || fail "curl is needed"
+    command -v tar >/dev/null || fail "tar is needed"
+    curl -fsSL "$url" | tar -xz -C "$tmp" --strip-components=1 || fail "download failed: $url"
+    src=$tmp
+  elif [[ -f $src ]]; then
+    tar -xzf "$src" -C "$tmp" --strip-components=1 || fail "cannot unpack $src"
+    src=$tmp
   fi
-  if [[ -z $dir ]]; then
-    echo "error: no dotfiles clone found. Clone it first, then run this again:" >&2
-    echo "  git clone https://github.com/PatrykGodlewski/dotfiles ~/Projects/dotfiles" >&2
-    exit 1
-  fi
+  [[ -f $src/dot && -d $src/lib && -d $src/cmd ]] || fail "$src does not contain the dot tool"
 
-  mkdir -p "$HOME/.local/bin"
-  ln -sfn "$dir/dot" "$HOME/.local/bin/dot"
-  echo "✓ ~/.local/bin/dot → ${dir/#$HOME/\~}/dot"
+  # replace the tool files in one step, so a failed copy leaves the old install
+  rm -rf "$share.new"
+  mkdir -p "$share.new" "$bin"
+  for part in lib cmd managers templates; do cp -R "$src/$part" "$share.new/"; done
+  rm -rf "$share"
+  mv "$share.new" "$share"
+  rm -f "$bin/dot" # may be a symlink from an older install
+  cp "$src/dot" "$bin/dot"
+  chmod 755 "$bin/dot"
+  echo "✓ installed dot → ~/.local/bin/dot"
 
-  # ~/.local/bin first in PATH, for new shells
-  marker='# dotfiles: ~/.local/bin first'
+  # ~/.local/bin first in PATH for new shells (graphviz ships /usr/bin/dot)
+  local rc marker='# dotfiles: ~/.local/bin first'
   for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     [[ -f $rc && ! -L $rc ]] || continue # a symlinked rc comes from the repo, which handles PATH
     grep -qF "$marker" "$rc" && continue
@@ -44,8 +58,7 @@ main() {
     echo "✓ ~/.local/bin added to the front of PATH in ${rc/#$HOME/\~}"
   done
 
-  # Only this terminal can be stale: say so when `dot` doesn't resolve to ours yet
-  if [[ $(command -v dot 2>/dev/null) != "$HOME/.local/bin/dot" ]]; then
+  if [[ $(command -v dot 2>/dev/null) != "$bin/dot" ]]; then
     echo "→ open a new terminal (or run: exec \$SHELL -l), then: dot"
   else
     echo "→ next: dot"

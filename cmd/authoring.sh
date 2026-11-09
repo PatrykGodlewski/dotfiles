@@ -8,7 +8,7 @@ new_module() { # new_module name desc pkgs pacman apt  -> creates files
   run mkdir -p "$dir/home" || return 1
   [[ $DOT_DRY == 1 ]] && return 0
   sed -e "s|__NAME__|$name|g" -e "s|__DESC__|${desc//|/ }|g" -e "s|__PKGS__|$pkgs|" \
-    -e "s|__PACMAN__|$pac|" -e "s|__APT__|$apt|" "$DOT_ROOT/templates/module.sh" >"$dir/module.sh"
+    -e "s|__PACMAN__|$pac|" -e "s|__APT__|$apt|" "$DOT_HOME/templates/module.sh" >"$dir/module.sh"
   touch "$dir/home/.gitkeep"
   ok "created $(pretty "$dir/module.sh")"
 }

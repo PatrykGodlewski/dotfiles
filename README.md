@@ -6,14 +6,21 @@ It installs packages and links configs on **Arch-based** distros (Arch, Endeavou
 ## Install
 
 ```bash
-git clone https://github.com/PatrykGodlewski/dotfiles ~/Projects/dotfiles
-~/Projects/dotfiles/install.sh
-# or, once the clone exists:
 curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dotfiles/main/install.sh | bash
 ```
 
-The installer only installs the `dot` command. It links `~/.local/bin/dot` to your clone (the one it runs from, else `$DOTFILES_DIR`, `~/Projects/dotfiles` or `~/projects/dotfiles`) and puts `~/.local/bin` at the **front** of PATH in `~/.bashrc` / `~/.zshrc`, because graphviz ships its own `/usr/bin/dot`.
-It doesn't clone, pull, install packages or touch configs. Then:
+This installs only the `dot` tool: the command in `~/.local/bin/dot` and its files in `~/.local/share/dot/`. It also puts `~/.local/bin` at the **front** of PATH in `~/.bashrc` / `~/.zshrc`, because graphviz ships its own `/usr/bin/dot`.
+It doesn't clone anything, install packages or touch configs. Run it again, or `dot self-update`, to update the tool.
+
+Your dotfiles (this repo's `modules/`, `presets/`, …) are separate. Clone them wherever you like:
+
+```bash
+git clone https://github.com/PatrykGodlewski/dotfiles ~/Projects/dotfiles
+dot repo                 # shows which repo dot uses and why
+dot repo ~/somewhere     # or point it at another clone
+```
+
+dot looks in this order: `$DOTFILES_DIR`, the path set with `dot repo`, the checkout it runs from, the current directory, then `~/Projects/dotfiles`, `~/projects/dotfiles`, `~/dotfiles` and `~/.dotfiles`. Then:
 
 ```bash
 dot configs    # copy / link the configs you pick (no packages)
@@ -129,10 +136,12 @@ git add modules/starship && git commit
 
 ```
 dot                 entry point: flags, help, command dispatch
+                    (installed as ~/.local/bin/dot, files in ~/.local/share/dot)
 cmd/                one file per command group (defines cmd_*)
-lib/                reusable logic: os, ui, managers, state, links, modules,
+lib/                reusable logic: repo (where the tool / your dotfiles are), os, ui,
+                    managers, state, links, modules,
                     profile (Omarchy profile file), omarchy (adapters), sync
-install.sh          installs the `dot` command (link + PATH), nothing else
+install.sh          installs the dot tool (downloads lib/ cmd/ managers/ templates/)
 managers/           package managers: pacman apt aur cargo flatpak services
 modules/<name>/
   module.sh         what to install (packages + optional hooks)
@@ -184,6 +193,7 @@ An existing file at the target is moved to `~/.local/state/dotfiles/backups/<tim
 
 ### Machine state (not in git)
 
+- `~/.config/dotfiles/repo`: the dotfiles repo set with `dot repo`
 - `~/.config/dotfiles/selected`: modules chosen on this machine
 - `~/.config/dotfiles/secrets.env`: API keys (from `modules/secrets`, sourced by zsh)
 - `~/.local/state/dotfiles/copies`: configs dot copied here, with a content hash

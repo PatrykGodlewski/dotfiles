@@ -10,7 +10,36 @@ cmd_update() {
   [[ $DOT_YES == 1 ]] && flags+=(--yes)
   [[ $DOT_DRY == 1 ]] && flags+=(--dry-run)
   rm -rf "$DOT_RUN_DIR" # exec skips the EXIT trap
-  exec "$DOT_ROOT/dot" refresh --then-apply "${flags[@]}"
+  exec "$DOT_SELF" refresh --then-apply "${flags[@]}"
+}
+
+# dot repo [path]: show which dotfiles repo is used, or remember one
+cmd_repo() {
+  local path=${1:-} found
+  if [[ -z $path ]]; then
+    found=$(repo_find) || { repo_require; return 1; }
+    printf '%s\n' "${found%%$'\t'*}"
+    info "${found#*$'\t'}"
+    return 0
+  fi
+  path=$(realpath -m "${path/#\~/$HOME}")
+  is_dotfiles_repo "$path" || die "$(pretty "$path") is not a dotfiles repo (no modules/ inside)"
+  [[ $DOT_DRY == 1 ]] && { info "would remember $(pretty "$path")"; return 0; }
+  mkdir -p "$DOT_CONFIG_DIR"
+  printf '%s\n' "$path" >"$REPO_FILE"
+  ok "dot now uses $(pretty "$path")"
+}
+
+# dot self-update: fetch and reinstall the latest tool (your repo is untouched)
+DOT_INSTALL_URL=${DOT_INSTALL_URL:-https://raw.githubusercontent.com/PatrykGodlewski/dotfiles/main/install.sh}
+cmd_self_update() {
+  if [[ $DOT_SELF != "$HOME/.local/bin/dot" ]]; then
+    info "running from a checkout ($(pretty "$DOT_SELF")) — update it with git pull"
+    return 0
+  fi
+  header "Reinstalling dot"
+  rm -rf "$DOT_RUN_DIR" # the installer replaces the files this process came from
+  run_sh "curl -fsSL '$DOT_INSTALL_URL' | bash"
 }
 
 # dot refresh: re-copy configs whose repo version changed since they were
@@ -42,20 +71,28 @@ cmd_doctor() {
   ok "OS: $(os_summary)  tags: ${OS_TAGS[*]}"
   [[ $OS_FAMILY == unknown ]] && err "unsupported distro family — only Arch and Debian/Ubuntu based distros are handled"
   ok "bash ${BASH_VERSION}"
-  ok "repo: $(pretty "$DOT_ROOT")"
-  if [[ -n $(git -C "$DOT_ROOT" status --porcelain 2>/dev/null) ]]; then
-    warn "repo has uncommitted changes (git -C $(pretty "$DOT_ROOT") status)"
+  ok "tool: $(pretty "$DOT_SELF")  (files: $(pretty "$DOT_HOME"))"
+  local found
+  if found=$(repo_find); then
+    ok "repo: $(pretty "${found%%$'\t'*}")  (${found#*$'\t'})"
+    if [[ -n $(git -C "$DOT_ROOT" status --porcelain 2>/dev/null) ]]; then
+      warn "repo has uncommitted changes (git -C $(pretty "$DOT_ROOT") status)"
+    fi
+  else
+    warn "no dotfiles repo found — clone one, or: dot repo <path>"
   fi
   if has sudo || [[ $EUID -eq 0 ]]; then ok "sudo available"; else err "sudo not found"; fi
   if has gum; then ok "gum $(gum --version 2>/dev/null | awk '{print $3}')"; else warn "gum missing — plain prompts are used (dot apply core)"; fi
   [[ ":$PATH:" == *":$HOME/.local/bin:"* ]] && ok "~/.local/bin in PATH"
-  has dot || warn "'dot' is not on PATH — link it: ln -s $(pretty "$DOT_ROOT/dot") ~/.local/bin/dot"
+  if [[ $(command -v dot) != "$HOME/.local/bin/dot" ]]; then
+    warn "'dot' resolves to $(command -v dot || echo nothing) — install.sh puts it in ~/.local/bin (first in PATH)"
+  fi
   for m in "${MGR_ORDER[@]}"; do
     mgr_relevant "$m" || continue
     if mgr "$m" m_available; then ok "manager $m: ${MGR_DESC[$m]}"; else info "manager $m: not available here"; fi
   done
   local broken
-  broken=$(find "$HOME" -maxdepth 3 -xtype l -lname "$DOT_ROOT/*" 2>/dev/null)
+  [[ -n $DOT_ROOT ]] && broken=$(find "$HOME" -maxdepth 3 -xtype l -lname "$DOT_ROOT/*" 2>/dev/null)
   if [[ -n $broken ]]; then
     warn "broken links into the repo (module file removed?):"
     sed 's/^/    /' <<<"$broken"

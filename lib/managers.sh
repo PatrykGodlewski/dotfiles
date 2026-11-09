@@ -11,16 +11,16 @@ declare -ga MGR_ORDER=()
 managers_load() {
   local preferred=(pacman apt aur cargo flatpak) f n
   local -a found=()
-  for f in "$DOT_ROOT"/managers/*.sh; do found+=("$(basename "$f" .sh)"); done
+  for f in "$DOT_HOME"/managers/*.sh; do found+=("$(basename "$f" .sh)"); done
   for n in "${preferred[@]}"; do in_list "$n" "${found[@]}" && MGR_ORDER+=("$n"); done
   for n in "${found[@]}"; do
     in_list "$n" "${preferred[@]}" services || MGR_ORDER+=("$n")
   done
   in_list services "${found[@]}" && MGR_ORDER+=(services)
   for n in "${MGR_ORDER[@]}"; do
-    MGR_VAR[$n]=$(M_VAR='' && source "$DOT_ROOT/managers/$n.sh" && echo "$M_VAR")
-    MGR_DESC[$n]=$(M_DESC='' && source "$DOT_ROOT/managers/$n.sh" && echo "$M_DESC")
-    MGR_FAMILY[$n]=$(M_FAMILY='' && source "$DOT_ROOT/managers/$n.sh" && echo "$M_FAMILY")
+    MGR_VAR[$n]=$(M_VAR='' && source "$DOT_HOME/managers/$n.sh" && echo "$M_VAR")
+    MGR_DESC[$n]=$(M_DESC='' && source "$DOT_HOME/managers/$n.sh" && echo "$M_DESC")
+    MGR_FAMILY[$n]=$(M_FAMILY='' && source "$DOT_HOME/managers/$n.sh" && echo "$M_FAMILY")
   done
 }
 
@@ -30,7 +30,7 @@ mgr() {
   (
     set +e # managers check return codes themselves; don't inherit setup()'s set -e
     # shellcheck disable=SC1090
-    source "$DOT_ROOT/managers/$n.sh" && "$fn" "$@"
+    source "$DOT_HOME/managers/$n.sh" && "$fn" "$@"
   )
 }
 

@@ -3,15 +3,27 @@
 # Run `dot help` for usage.
 set -o pipefail
 
-DOT_ROOT=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
+# The tool's own files sit next to this script in a checkout, or in
+# ~/.local/share/dot when installed by install.sh.
+DOT_SELF=$(readlink -f "${BASH_SOURCE[0]}")
+DOT_HOME=$(dirname "$DOT_SELF")
+[[ -d $DOT_HOME/lib ]] || DOT_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/dot"
+[[ -d $DOT_HOME/lib ]] || { echo "dot: support files missing in $DOT_HOME — reinstall with install.sh" >&2; exit 1; }
+export DOT_SELF DOT_HOME
+
+# shellcheck disable=SC1091
+source "$DOT_HOME/lib/core.sh"
+# shellcheck disable=SC1091
+source "$DOT_HOME/lib/repo.sh"
+DOT_ROOT=$(repo_find | cut -f1) # your dotfiles repo; empty when not found
 export DOT_ROOT
 
 # lib/ = reusable logic, cmd/ = one file per command group (defines cmd_*)
-for _f in core os ui managers state links modules github profile omarchy sync; do
+for _f in os ui managers state links modules github profile omarchy sync; do
   # shellcheck disable=SC1090
-  source "$DOT_ROOT/lib/$_f.sh"
+  source "$DOT_HOME/lib/$_f.sh"
 done
-for _f in "$DOT_ROOT"/cmd/*.sh; do
+for _f in "$DOT_HOME"/cmd/*.sh; do
   # shellcheck disable=SC1090
   source "$_f"
 done
@@ -49,10 +61,12 @@ ${C_BOLD}Usage:${C_RESET} dot [command] [args] [-n|--dry-run] [-y|--yes] [-v|--v
   ${C_CYAN}link${C_RESET} / ${C_CYAN}unlink${C_RESET} [modules]  only (un)link whole modules' configs, no packages
   ${C_CYAN}update${C_RESET}               git pull, refresh copied configs, re-apply the selection
   ${C_CYAN}refresh${C_RESET}              re-copy configs the repo changed (keeps ones you edited here)
+  ${C_CYAN}repo${C_RESET} [path]          show / set which dotfiles repo dot uses
+  ${C_CYAN}self-update${C_RESET}          reinstall the latest dot tool
   ${C_CYAN}doctor${C_RESET}               check the environment
 
 Targets are module names or @preset (e.g. ${C_DIM}dot plan @desktop${C_RESET}).
-Repo: $(pretty "$DOT_ROOT")   OS: $(os_summary)
+Repo: $(if [[ -n $DOT_ROOT ]]; then pretty "$DOT_ROOT"; else echo "none — see: dot repo"; fi)   OS: $(os_summary)
 EOF
 }
 
@@ -72,6 +86,13 @@ main() {
   set -- "${args[@]}"
   local cmd=${1:-menu}
   (($#)) && shift
+  case $cmd in # commands that work without a dotfiles repo
+    help) usage; return ;;
+    repo) cmd_repo "$@"; return ;;
+    self-update) cmd_self_update; return ;;
+    doctor) cmd_doctor; return ;;
+  esac
+  repo_require
   case $cmd in
     menu) cmd_menu ;;
     status | st) cmd_status ;;
@@ -92,9 +113,7 @@ main() {
     unlink) cmd_unlink "$@" ;;
     update | up) cmd_update ;;
     refresh) cmd_refresh "$@" ;;
-    doctor) cmd_doctor ;;
     bootstrap) DOT_YES=1; cmd_apply core ;; # used by install.sh: core only
-    help) usage ;;
     *) err "unknown command: $cmd"; usage; return 1 ;;
   esac
 }

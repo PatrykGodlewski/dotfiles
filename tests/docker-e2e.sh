@@ -15,8 +15,9 @@ cp -r /src /tmp/repo && cd /tmp/repo &&
   git -c user.email=t@t -c user.name=t commit -qm wip >/dev/null && git branch -M main
 cd ~
 echo "existing" > ~/.gitconfig
-bash /tmp/repo/install.sh >/tmp/install.log 2>&1 || { tail -30 /tmp/install.log; exit 1; }
+DOT_SOURCE=/tmp/repo bash /tmp/repo/install.sh >/tmp/install.log 2>&1 || { tail -30 /tmp/install.log; exit 1; }
 export PATH="$HOME/.local/bin:$PATH"
+dot repo /tmp/repo >>/tmp/install.log 2>&1 || { tail -30 /tmp/install.log; exit 1; }
 dot bootstrap </dev/null >>/tmp/install.log 2>&1 || { tail -30 /tmp/install.log; exit 1; }
 command -v gum >/dev/null || { echo "FAIL: gum missing after bootstrap"; exit 1; }
 dot apply @minimal --yes >/tmp/apply.log 2>&1 || { tail -40 /tmp/apply.log; exit 1; }
