@@ -21,12 +21,15 @@ Later: `dot` (menu), `dot sync` (record what changed on this machine), `dot upda
 ## What's here
 
 - `modules/<name>/module.sh`: what to install; `modules/<name>/home/`: files that mirror `$HOME`
-- `presets/`: `minimal` (shell + editor), `headless` (+ dev tools), `desktop` (+ Hyprland desktop)
+- `presets/`: `minimal` (git, shell, tmux, neovim), `headless` (+ dev tools), `desktop` (+ Hyprland desktop)
 - `modules/omarchy/profile`: my Omarchy defaults, theme, installers and removed preinstalls
 - `sync.ignore`: what `dot sync` should never propose (on top of dot's built-in list)
 
 Notes:
 - On Omarchy, `hyprland` is skipped: Omarchy manages its own Hyprland setup.
-- `bash` loads Omarchy's own shell setup first when it runs on Omarchy, and only switches to zsh elsewhere.
+- `shell` sets up bash and zsh the same way on every distro and makes zsh the login shell (log out and in once afterwards):
+  - `~/.config/shell/env.sh`, `aliases.sh`, `functions.sh`: shared by both shells. Edit these for PATH, aliases and functions.
+  - `~/.bashrc`: the distro's own default `.bashrc` (Omarchy's setup on Omarchy), then the shared files
+  - `~/.zshrc`: Omarchy's setup (on Omarchy), the shared files, zinit plugins, oh-my-posh prompt
 
 Check the repo with `dot check`.

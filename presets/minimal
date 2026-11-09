@@ -1,6 +1,5 @@
 # Shell + editor only (servers, containers)
 git
-bash
-zsh
+shell
 tmux
 neovim
