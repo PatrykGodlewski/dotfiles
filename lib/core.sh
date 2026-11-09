@@ -71,6 +71,24 @@ goarch() {
   esac
 }
 
+# show_diff <old> <new> [label] [max-lines]: unified diff, colored on a
+# terminal, capped at max-lines unless --verbose. Works on files and dirs.
+show_diff() {
+  local a=$1 b=$2 label=${3:-} max=${4:-0} color=never out n
+  [[ -t 1 && -z ${NO_COLOR:-} ]] && color=always
+  local -a opts=(-ruN "--color=$color")
+  [[ -n $label && ! -d $a && ! -d $b ]] && opts+=(--label "$label (now)" --label "$label (new)")
+  out=$(diff "${opts[@]}" "$a" "$b")
+  [[ -z $out ]] && return 0
+  n=$(wc -l <<<"$out")
+  if ((max > 0 && n > max)) && [[ $DOT_VERBOSE != 1 ]]; then
+    head -n "$max" <<<"$out"
+    printf '  %s… %d more lines (dot -v … shows everything)%s\n' "$C_DIM" $((n - max)) "$C_RESET"
+  else
+    printf '%s\n' "$out"
+  fi
+}
+
 in_list() { # in_list needle item...
   local n=$1; shift
   local i

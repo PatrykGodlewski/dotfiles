@@ -22,6 +22,10 @@ for t in $(declare -F | awk '{print $3}' | grep '^test_'); do
   T=$(mktemp -d "${TMPDIR:-/tmp}/dot-test.XXXXXX")
   out=$( (export T; new_sandbox; "$t") 2>&1 )
   rc=$?
+  if [[ -s $T/traps.log ]]; then # the test reached for the real system
+    out+=$'\n    TOUCHED THE REAL SYSTEM (trapped):\n'"$(sed 's/^/      /' "$T/traps.log")"
+    rc=1
+  fi
   rm -rf "$T"
   if ((rc == 0)); then
     ((pass++)); printf '%s✓%s %s\n' "$G" "$N" "${t#test_}"

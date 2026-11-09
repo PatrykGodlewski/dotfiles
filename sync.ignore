@@ -1,0 +1,39 @@
+# Things `dot sync` never proposes. One "<kind> <glob>" per line.
+# kinds: pkg (packages), app (preinstalled web apps / TUIs), config (~/.config entries)
+
+# base system and hardware: they belong to this machine, not to your setup
+pkg base
+pkg sudo
+pkg linux*
+pkg *-firmware
+pkg *-ucode
+pkg *-dkms
+pkg nvidia*
+pkg lib32-*
+pkg vulkan-*
+pkg libva-*
+pkg mesa*
+pkg pipewire*
+pkg gst-plugin-*
+pkg libpulse
+pkg limine*
+pkg efibootmgr
+pkg mkinitcpio
+pkg btrfs-progs
+pkg zram-generator
+pkg omarchy*
+
+# app data / machine state, not configuration
+config BraveSoftware
+config google-chrome*
+config microsoft-edge*
+config vivaldi*
+config 1Password
+config dconf
+config pulse
+config systemd
+config ibus
+config fcitx
+config user-dirs.*
+config mimeapps.list
+config xdg-terminals.list

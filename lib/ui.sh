@@ -2,8 +2,9 @@
 # Interactive prompts. Uses gum when available, plain bash prompts otherwise.
 # Menu items are passed as "name<TAB>description"; functions print chosen names.
 
-ui_interactive() { [[ -t 0 && -t 2 ]]; }
-ui_gum() { has gum && ui_interactive && [[ -z ${DOT_NO_GUM:-} ]]; }
+# DOT_FORCE_TTY=1 (tests) = interactive with plain prompts that read stdin
+ui_interactive() { [[ -n ${DOT_FORCE_TTY:-} ]] || [[ -t 0 && -t 2 ]]; }
+ui_gum() { [[ -z ${DOT_NO_GUM:-}${DOT_FORCE_TTY:-} ]] && has gum && ui_interactive; }
 
 # ui_confirm "Question?"  -> 0 yes / 1 no
 ui_confirm() {
@@ -104,5 +105,17 @@ ui_choose_many() {
     done
   done
   for n in "${names[@]}"; do [[ -n ${on[$n]:-} ]] && printf '%s\n' "$n"; done
+  return 0
+}
+
+# ui_pick_many <array-var> "Header" "preselected" item...
+# Like ui_choose_many, but stores the chosen names in <array-var> and returns 1
+# when the picker was cancelled (a plain `mapfile < <(...)` can't see that).
+ui_pick_many() {
+  local -n _picked=$1; shift
+  local _out
+  _out=$(ui_choose_many "$@") || return 1
+  _picked=()
+  [[ -n $_out ]] && mapfile -t _picked <<<"$_out"
   return 0
 }

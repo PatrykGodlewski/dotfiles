@@ -66,7 +66,6 @@ mod_pkgs() {
   return 0
 }
 
-mod_desc() { mod_load "$1"; printf '%s' "$DESC"; }
 
 # Resolve names (and @preset refs) to an ordered, de-duplicated list with
 # dependencies first and REQUIRED modules at the front.

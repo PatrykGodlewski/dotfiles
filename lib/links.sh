@@ -32,6 +32,13 @@ _links_walk() {
   done
 }
 
+# config_src <module> <dst> -> the repo file/dir that module installs at dst
+config_src() {
+  local src d
+  while IFS=$'\t' read -r src d; do [[ $d == "$2" ]] && { printf '%s' "$src"; return 0; }; done < <(links_of "$1")
+  return 1
+}
+
 # link_unit <path relative to $HOME> -> the part that would be linked
 link_unit() {
   local rel=$1 acc='' part
@@ -77,6 +84,15 @@ link_remove() {
   if [[ -L $dst && $(readlink "$dst") == "$src" ]]; then run rm "$dst"; fi
 }
 
+# tree_hash <path>: content hash of a file or a whole directory tree
+tree_hash() {
+  if [[ -d $1 ]]; then
+    (cd "$1" && find . -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha1sum) | sha1sum | cut -c1-40
+  else
+    sha1sum <"$1" | cut -c1-40
+  fi
+}
+
 # copy_apply <src> <dst>: install a real copy instead of a symlink.
 # Identical copies are left alone; anything else at dst is backed up first.
 copy_apply() {
@@ -87,14 +103,6 @@ copy_apply() {
     conflict | ok | foreign) _backup "$dst" || return 1 ;;
   esac
   run mkdir -p "$(dirname "$dst")" && run cp -a "$src" "$dst"
-}
-
-# config_done <mode> <state>: true when nothing needs to happen
-config_done() {
-  case $1:$2 in
-    link:ok | copy:same) return 0 ;;
-    *) return 1 ;;
-  esac
 }
 
 # config_label <mode> <state>: short human description for pickers / plans

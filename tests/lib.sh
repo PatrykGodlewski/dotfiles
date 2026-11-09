@@ -13,12 +13,15 @@ new_sandbox() { # expects $T (created by the runner)
   mkdir -p "$HOME"
   unset XDG_CONFIG_HOME XDG_STATE_HOME XDG_DATA_HOME WSL_DISTRO_NAME
   export NO_COLOR=1 DOT_NO_GUM=1 DOT_WSL=0
+  export OMARCHY_PATH="$T/omshare" # never read the host's Omarchy data
+  unset DOT_OMARCHY DOT_FORCE_TTY
   export FAKE_DB="$T/fake-db" FAKE_LOG="$T/fake-log"
   : >"$FAKE_DB"; : >"$FAKE_LOG"
   unset FAKE_FAIL FAKE_UNAVAILABLE
+  install_traps
   R="$T/repo"
   mkdir -p "$R/modules" "$R/presets" "$R/managers"
-  cp -r "$REPO/dot" "$REPO/lib" "$REPO/templates" "$R/"
+  cp -r "$REPO/dot" "$REPO/lib" "$REPO/cmd" "$REPO/templates" "$R/"
   fake_manager pacman PACMAN arch
   fake_manager apt APT debian
   fake_manager extra EXTRA ''
@@ -26,6 +29,25 @@ new_sandbox() { # expects $T (created by the runner)
   SEL="$HOME/.config/dotfiles/selected"
   REC="$HOME/.local/state/dotfiles/installed"
 }
+
+# Every command that could touch the real system resolves to a trap that logs
+# the call to $T/traps.log and fails. tests/run.sh fails any test that hit one.
+# Tests that need such a command install a fake into $T/bin (searched first).
+TRAPPED_CMDS=(omarchy sudo pkexec pacman yay paru makepkg apt apt-get dpkg flatpak
+  cargo rustup systemctl xdg-settings xdg-mime gum curl wget hyprctl notify-send
+  omarchy-pkg-defaults)
+install_traps() {
+  mkdir -p "$T/traps" "$T/bin"
+  local c
+  for c in "${TRAPPED_CMDS[@]}"; do
+    printf '#!/bin/sh\necho "%s $*" >>"%s/traps.log"\nexit 97\n' "$c" "$T" >"$T/traps/$c"
+    chmod +x "$T/traps/$c"
+  done
+  export PATH="$T/bin:$T/traps:$PATH"
+}
+
+# fake_cmd <name> <<'EOF' ... script body ... EOF   (a stand-in in $T/bin)
+fake_cmd() { { echo '#!/usr/bin/env bash'; cat; } >"$T/bin/$1"; chmod +x "$T/bin/$1"; }
 
 # fake_manager <name> <MODULE_VAR> <family|''>
 fake_manager() {
@@ -75,12 +97,14 @@ preinstall() { local m=$1; shift; local p; for p in "$@"; do echo "$m $p" >>"$FA
 
 # Run the CLI non-interactively; output in $OUT, status in $RC
 dotx() { OUT=$("$R/dot" "$@" </dev/null 2>&1); RC=$?; }
+# Run it "interactively": plain prompts read answers from $1 (one per line)
+doti() { local input=$1; shift; OUT=$(printf '%s\n' "$input" | DOT_FORCE_TTY=1 "$R/dot" "$@" 2>&1); RC=$?; }
 
 # Source the libraries for unit tests
 load_libs() {
   export DOT_ROOT=$R
   local f
-  for f in core os ui managers state links modules github; do
+  for f in core os ui managers state links modules github profile omarchy sync; do
     # shellcheck disable=SC1090
     source "$R/lib/$f.sh"
   done

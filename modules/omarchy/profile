@@ -1,0 +1,46 @@
+# Omarchy profile: one `omarchy` command per line (the leading "omarchy" is optional).
+# Apply with `dot omarchy`: lines already in effect are skipped, the rest are
+# shown in a picker. Quote arguments that contain spaces. See `omarchy commands`.
+#
+# dot can tell whether these are already done: default …, theme set, font set,
+# webapp remove, tui remove, pkg add / aur add / drop. Anything else (e.g.
+# `install …`) is listed as "can't check" and only runs when you tick it.
+
+# ---- default apps (installs the app first if it's missing)
+default browser chromium
+default terminal ghostty
+default editor zed
+default agent claude
+
+# ---- look
+theme set "Tokyo Night"
+font set "JetBrainsMono Nerd Font"
+
+# ---- extra software through omarchy's installers
+# install browser firefox
+# install dev-env node
+# install dev-env go
+# install service tailscale
+# install service 1password
+# pkg add btop
+# pkg aur add some-aur-package
+
+# ---- preinstalls to remove (uncomment what you don't want)
+# webapp remove Basecamp
+# webapp remove HEY
+# webapp remove WhatsApp
+# webapp remove X
+# webapp remove YouTube
+# webapp remove Zoom
+# webapp remove Discord
+# webapp remove "Google Contacts"
+# webapp remove "Google Maps"
+# webapp remove "Google Messages"
+# webapp remove "Google Photos"
+# tui remove Docker
+# pkg drop libreoffice-fresh
+# pkg drop obsidian
+# pkg drop pinta
+# pkg drop moonlight-qt
+# pkg drop aether cliamp omacut monologue omacalc omawrite hype signed
+# remove preinstalls        # omarchy's own "remove all of the above" (asks first)
