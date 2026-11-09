@@ -28,12 +28,15 @@ omarchy_menu() {
   local choice
   while true; do
     choice=$(ui_choose_one "Omarchy profile — $(pretty "$PROFILE_FILE")" \
+      "$(ui_sep "Profile")" \
       "status"$'\t'"what is in effect" \
-      "apply"$'\t'"run chosen profile lines (installs / sets / removes)" \
       "add"$'\t'"add defaults, theme, installers, removals (nothing runs)" \
       "remove"$'\t'"delete lines from the profile" \
-      "sync"$'\t'"record changes made on this machine (e.g. via the Omarchy menu)" \
       "edit"$'\t'"open the profile in \$EDITOR" \
+      "$(ui_sep "Machine")" \
+      "apply"$'\t'"run chosen profile lines (installs / sets / removes)" \
+      "sync"$'\t'"record changes made here (e.g. via the Omarchy menu)" \
+      "$(ui_sep "")" \
       "back"$'\t'"") || return 0
     [[ $choice == back ]] && return 0
     cmd_omarchy "$choice"

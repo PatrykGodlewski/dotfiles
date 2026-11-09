@@ -106,24 +106,33 @@ cmd_menu() {
   ui_interactive || { usage; return; }
   [[ -z $(sel_get) ]] && info "Nothing selected on this machine yet — start with 'configs' or 'preset'."
   local choice
-  local -a extra=()
-  om_available && extra=("omarchy"$'\t'"Omarchy profile: defaults / theme / installers / preinstalls")
+  local -a omarchy=()
+  om_available && omarchy=(
+    "$(ui_sep "Omarchy")"
+    "omarchy"$'\t'"Defaults, theme, installers, preinstalls (profile)"
+  )
   while true; do
     choice=$(ui_choose_one "dot — $(os_summary)" \
-      "configs"$'\t'"Pick configs to copy or link (no packages)" \
-      "sync"$'\t'"Record changes made on this machine into the repo (shows diffs)" \
-      "${extra[@]}" \
+      "$(ui_sep "Configs")" \
+      "configs"$'\t'"Copy / link / remove configs (no packages)" \
+      "sync"$'\t'"Record changes made on this machine into the repo" \
+      "refresh"$'\t'"Re-copy configs the repo changed" \
+      "${omarchy[@]}" \
+      "$(ui_sep "Apps & modules")" \
       "status"$'\t'"What is selected / installed / linked" \
       "preset"$'\t'"Start from a preset (desktop / headless / ...)" \
       "select"$'\t'"Choose modules for this machine" \
-      "apply"$'\t'"Apply the saved selection" \
       "plan"$'\t'"Dry run: show what apply would do" \
+      "apply"$'\t'"Apply the saved selection" \
       "remove"$'\t'"Remove modules" \
+      "prune"$'\t'"Uninstall packages no longer needed" \
+      "$(ui_sep "Dotfiles repo")" \
+      "update"$'\t'"git pull, refresh copied configs, re-apply" \
       "new"$'\t'"Create a new module" \
       "adopt"$'\t'"Move an existing config into a module" \
-      "prune"$'\t'"Uninstall packages no longer needed" \
-      "update"$'\t'"git pull, refresh copied configs, re-apply" \
+      "$(ui_sep "dot")" \
       "doctor"$'\t'"Check the environment" \
+      "self-update"$'\t'"Install the latest dot" \
       "quit"$'\t'"") || break
     [[ $choice == quit ]] && break
     # subshell: a command that fails (die/exit) returns here instead of
@@ -133,7 +142,7 @@ cmd_menu() {
         p=$(ui_input "Path to adopt (e.g. ~/.config/foo)")
         [[ -z $p ]] || cmd_adopt "${p/#\~/$HOME}"
       else
-        "cmd_$choice"
+        "cmd_${choice//-/_}"
       fi
     ) || true
     printf '\n'

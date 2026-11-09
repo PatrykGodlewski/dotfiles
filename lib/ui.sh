@@ -33,33 +33,48 @@ ui_input() {
   printf '%s\n' "${a:-$def}"
 }
 
-# Render "name<TAB>desc" as an aligned display line (no commas: gum uses them
-# as separators for --selected).
+# Render "name<TAB>desc" as an aligned display line.
 _ui_line() {
   local name=${1%%$'\t'*} desc=''
   [[ $1 == *$'\t'* ]] && desc=${1#*$'\t'}
-  desc=${desc//,/;}
   printf "%-${UI_NAME_W:-14}s %s" "$name" "$desc"
 }
 
-# ui_choose_one "Header" item...
+# ui_sep "Title" -> a section header item for ui_choose_one (not selectable)
+UI_SEP_MARK='---'
+ui_sep() { printf '%s\t%s' "$UI_SEP_MARK" "$1"; }
+_ui_is_sep() { [[ ${1%%$'\t'*} == "$UI_SEP_MARK" ]]; }
+_ui_sep_line() { printf '%s── %s ──%s' "$C_DIM" "${1#*$'\t'}" "$C_RESET"; }
+
+# ui_choose_one "Header" item...   (items may include ui_sep headers)
 ui_choose_one() {
   local h=$1; shift
   local -a lines=() names=()
   local it
-  for it in "$@"; do lines+=("$(_ui_line "$it")"); names+=("${it%%$'\t'*}"); done
   if ui_gum; then
+    for it in "$@"; do
+      if _ui_is_sep "$it"; then lines+=("$(_ui_sep_line "$it")"); else lines+=("  $(_ui_line "$it")"); fi
+    done
     local out
-    out=$(gum choose --header "$h" --height 15 "${lines[@]}") || return 1
+    while true; do
+      out=$(gum choose --header "$h" --height 25 "${lines[@]}") || return 1
+      [[ $out == *"── "* ]] || break # picked a header: ask again
+    done
     awk '{print $1}' <<<"$out"
     return
   fi
   printf '%s%s%s\n' "$C_BOLD" "$h" "$C_RESET" >&2
-  local i
-  for i in "${!lines[@]}"; do printf '  %2d) %s\n' $((i + 1)) "${lines[i]}" >&2; done
+  for it in "$@"; do
+    if _ui_is_sep "$it"; then
+      printf '  %s\n' "$(_ui_sep_line "$it")" >&2
+    else
+      names+=("${it%%$'\t'*}")
+      printf '  %2d) %s\n' "${#names[@]}" "$(_ui_line "$it")" >&2
+    fi
+  done
   local a
-  read -rp "Choose [1-${#lines[@]}]: " a
-  [[ $a =~ ^[0-9]+$ && $a -ge 1 && $a -le ${#lines[@]} ]] || return 1
+  read -rp "Choose [1-${#names[@]}]: " a
+  [[ $a =~ ^[0-9]+$ && $a -ge 1 && $a -le ${#names[@]} ]] || return 1
   printf '%s\n' "${names[a - 1]}"
 }
 
@@ -71,7 +86,7 @@ ui_choose_many() {
   for it in "$@"; do
     n=${it%%$'\t'*}
     names+=("$n")
-    lines+=("$(_ui_line "$it")")
+    lines+=("$(_ui_line "${it//,/;}")") # gum --selected is comma separated
     [[ $pre == *" $n "* ]] && sel+=("${lines[-1]}")
   done
   if ui_gum; then
