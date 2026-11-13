@@ -3,3 +3,6 @@ modules/*/home/.config/helix/runtime
 
 # omazed generates the Zed theme from the current Omarchy theme
 modules/*/home/.config/zed/themes/
+
+# OpenRGB writes its run logs next to its config
+modules/*/home/.config/OpenRGB/logs/
