@@ -24,6 +24,12 @@ _HELIUM_KEY=BE677C1989D35EAB2C5F26C9351601AD01D6378E # Helium signing key <heliu
 _HELIUM_DIR="$HOME/.local/opt/helium"
 _HELIUM_APP="$HOME/.local/share/applications/helium.desktop"
 _HELIUM_ICON="$HOME/.local/share/icons/hicolor/256x256/apps/helium.png"
+# Browser settings as Chromium policies (Helium reads /etc/chromium/policies,
+# where Omarchy also puts its theme color). They apply to Chromium as well.
+#   policies/managed/helium.json      enforced: extensions (1Password)
+#   policies/recommended/helium.json  defaults you can still change: search engine
+_HELIUM_POLICIES="$MOD_DIR/policies"
+_HELIUM_POLICY_DIR=/etc/chromium/policies
 
 # newest release tag, e.g. 0.21.1.1
 _helium_latest() {
@@ -94,7 +100,21 @@ setup() {
 # default browser` makes (it just doesn't list Helium)
 _helium_xdg() { env -u BROWSER XDG_CURRENT_DESKTOP= xdg-settings "$@"; }
 
+# copy each policy file into /etc/chromium/policies/<kind>/ when it differs
+_helium_policies() {
+  local src kind dst
+  for src in "$_HELIUM_POLICIES"/*/helium.json; do
+    [[ -f $src ]] || continue
+    kind=$(basename "$(dirname "$src")")
+    dst="$_HELIUM_POLICY_DIR/$kind/helium.json"
+    cmp -s "$src" "$dst" && continue
+    as_root install -Dm644 "$src" "$dst"
+    ok "Helium $kind policies → $dst"
+  done
+}
+
 configure() {
+  _helium_policies
   [[ $HELIUM_DEFAULT_BROWSER == 1 && -f $_HELIUM_APP ]] && has xdg-settings || return 0
   [[ $(_helium_xdg get default-web-browser 2>/dev/null) == helium.desktop ]] && return 0
   run _helium_xdg set default-web-browser helium.desktop
@@ -106,4 +126,8 @@ teardown() {
     warn "Helium was the default browser — pick another, e.g.: omarchy default browser chromium"
   fi
   run rm -rf "$_HELIUM_DIR" "$HOME/.local/bin/helium" "$_HELIUM_APP" "$_HELIUM_ICON"
+  local f
+  for f in "$_HELIUM_POLICY_DIR"/{managed,recommended}/helium.json; do
+    [[ -f $f ]] && as_root rm -f "$f"
+  done
 }
