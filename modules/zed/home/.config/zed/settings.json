@@ -15,10 +15,10 @@
   "format_on_save": "on",
   "agent": {
     "default_model": {
-      "provider": "openai-subscribed",
+      "provider": "zed.dev",
       "model": "gpt-6.1-sol",
       "enable_thinking": true,
-      "effort": "low"
+      "effort": "medium"
     },
     "favorite_models": [],
     "model_parameters": [],
