@@ -7,7 +7,7 @@
 # `install …`) is listed as "can't check" and only runs when you tick it.
 
 # ---- default apps (installs the app first if it's missing)
-default browser chromium
+# default browser: set by the helium module (Omarchy's own command does not list Helium)
 default terminal ghostty
 default editor zed
 default agent claude
