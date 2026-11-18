@@ -1,33 +1,30 @@
 #!/bin/bash
 # Pick a project from $DOTS_PROJECT_ROOT (set with: dot projects <path>) and
-# open / switch to a tmux session for it.
+# open / switch to a tmux session for it. A path argument skips the picker.
 
-# launched outside a shell (keybinding, launcher): read dot's setting directly
+# Launched outside a shell (keybinding, launcher): read dot's settings directly.
 if [[ -z ${DOTS_PROJECT_ROOT:-} && -f $HOME/.config/dotfiles/env.sh ]]; then
     . "$HOME/.config/dotfiles/env.sh"
 fi
-if [[ -z ${DOTS_PROJECT_ROOT:-} ]]; then
-    if [[ -d $HOME/Projects ]]; then DOTS_PROJECT_ROOT=$HOME/Projects; else DOTS_PROJECT_ROOT=$HOME/projects; fi
-fi
+: "${DOTS_PROJECT_ROOT:=$HOME/projects}"
 
 switch_to() {
     if [[ -z $TMUX ]]; then
-        tmux attach-session -t $1
+        tmux attach-session -t "$1"
     else
-        tmux switch-client -t $1
+        tmux switch-client -t "$1"
     fi
 }
 
 has_session() {
-    tmux list-sessions | grep -q "^$1:"
+    tmux has-session -t "=$1" 2>/dev/null
 }
 
+# hydrate <session> <dir>: run the project's .tmux-ready, or the default one
 hydrate() {
-    if [ -f $2/.tmux-ready ]; then
-        tmux send-keys -t $1 "source $2/.tmux-ready" c-M
-    elif [ -f $HOME/.local/scripts/.tmux-ready ]; then
-        tmux send-keys -t $1 "source $HOME/.local/scripts/.tmux-ready" c-M
-    fi
+    local ready="$2/.tmux-ready"
+    [[ -f $ready ]] || ready="$HOME/.local/scripts/.tmux-ready"
+    [[ -f $ready ]] && tmux send-keys -t "$1" "source '$ready'" C-m
 }
 
 if [[ $# -eq 1 ]]; then
@@ -36,22 +33,19 @@ else
     selected=$(find "$DOTS_PROJECT_ROOT" -mindepth 1 -maxdepth 1 -type d | fzf)
 fi
 
-if [[ -z $selected ]]; then
-    exit 0
-fi
+[[ -n $selected ]] || exit 0
 
 selected_name=$(basename "$selected" | tr ":,. " "____")
-tmux_running=$(pgrep tmux)
 
-if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
-    tmux new-session -s $selected_name -c $selected
-    hydrate $selected_name $selected
+if [[ -z $TMUX ]] && ! pgrep -x tmux >/dev/null; then
+    tmux new-session -s "$selected_name" -c "$selected"
+    hydrate "$selected_name" "$selected"
     exit 0
 fi
 
-if ! has_session $selected_name; then
-    tmux new-session -ds $selected_name -c $selected
-    hydrate $selected_name $selected
+if ! has_session "$selected_name"; then
+    tmux new-session -ds "$selected_name" -c "$selected"
+    hydrate "$selected_name" "$selected"
 fi
 
-switch_to $selected_name
+switch_to "$selected_name"

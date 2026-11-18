@@ -5,10 +5,10 @@ My configs and apps, managed by [dot](https://github.com/PatrykGodlewski/dot).
 ## Set up a machine
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dot/main/install.sh | bash -s -- --repo https://github.com/PatrykGodlewski/dotfiles --dir ~/Projects/dotfiles --projects ~/Projects
+curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dot/main/install.sh | bash -s -- --repo https://github.com/PatrykGodlewski/dotfiles --dir ~/projects/dotfiles --projects ~/projects
 ```
 
-This installs dot, clones this repo to `~/Projects/dotfiles`, sets the projects folder to `~/Projects` and starts `dot setup`, which asks:
+This installs dot, clones this repo to `~/projects/dotfiles`, sets the projects folder to `~/projects` and starts `dot setup`, which asks:
 1. **projects folder**: confirm or change it (saved as `$DOTS_PROJECT_ROOT`)
 2. **copy or link**: how configs go on this machine
 3. **apps**: which modules to install (each comes with its configs)

@@ -16,10 +16,7 @@ fi
 # ---- machine settings written by dot (not in git): DOTS_PROJECT_ROOT, …
 #      set with: dot projects <path>
 [ -f "$HOME/.config/dotfiles/env.sh" ] && . "$HOME/.config/dotfiles/env.sh"
-if [ -z "${DOTS_PROJECT_ROOT:-}" ]; then
-	if [ -d "$HOME/Projects" ]; then DOTS_PROJECT_ROOT="$HOME/Projects"; else DOTS_PROJECT_ROOT="$HOME/projects"; fi
-fi
-export DOTS_PROJECT_ROOT
+export DOTS_PROJECT_ROOT="${DOTS_PROJECT_ROOT:-$HOME/projects}"
 
 # ---- tools that live in $HOME
 export BUN_INSTALL="$HOME/.bun"
