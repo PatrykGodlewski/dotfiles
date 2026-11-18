@@ -1,6 +1,8 @@
 #!/bin/bash
 # label: 󰣇 Omarchy
 # update: omarchy-update
+# omarchy-update-available exits 1 when up to date. Otherwise it prints
+# "omarchy 3.1.0-1 -> 3.2.0-1" for the package, or
+# "omarchy-dev-checkout 3 new commits on origin/dev" for a dev checkout.
 out=$(omarchy-update-available 2>/dev/null) || exit 0
-read -r name from _ to <<<"${out%%$'\n'*}"
-echo "${name:-omarchy} ${from:-?} ${to:-new}"
+awk '$3 == "->" { print $1, $2, $4; next } NF { print $1, "-", "+" $2 "-commits" }' <<<"$out"

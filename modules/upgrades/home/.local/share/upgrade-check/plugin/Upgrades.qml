@@ -4,30 +4,55 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// Pending upgrades (Omarchy, pacman, AUR, mise), fed by `upgrade-check`.
-// left = update · right = not now (hide until something new) · middle = re-check
+// Pending upgrades, as reported by `upgrade-check` (all logic lives there;
+// this widget only displays its state and forwards clicks).
+// left = show the notification · right = not now · middle = check now
 BarWidget {
   id: root
   moduleName: "local.upgrades"
 
+  readonly property string tool: "upgrade-check"
+  readonly property int checkEverySeconds: 6 * 3600
+  readonly property int maxTooltipLines: 12
+
   property int count: 0
   property bool dismissed: false
-  property string details: ""
+  property var lines: []
 
   // Tooltips are Omarchy-owned text sinks; keep package names from reading as markup.
-  function plain(s) { return String(s).replace(/[<>&]/g, "") }
+  function plain(value) { return String(value).replace(/[<>&]/g, "").slice(0, 200) }
 
   function refresh() { if (!statusProc.running) statusProc.running = true }
-  function recheck() { if (!checkProc.running) checkProc.running = true }
 
-  function run(args) {
-    Quickshell.execDetached(["upgrade-check"].concat(args))
+  function check(force) {
+    if (checkProc.running) return
+    checkProc.command = force
+      ? [tool, "check", "--notify"]
+      : [tool, "check", "--notify", "--max-age", String(checkEverySeconds)]
+    checkProc.running = true
+  }
+
+  function run(command) { Quickshell.execDetached([tool, command]) }
+
+  function applyStatus(json) {
+    try {
+      var s = JSON.parse(json || "{}")
+      count = s.count || 0
+      dismissed = !!s.dismissed
+      lines = (s.lines || []).slice(0, maxTooltipLines).map(plain)
+    } catch (e) {
+      console.warn("local.upgrades: bad status from " + tool + ": " + e)
+      count = 0
+    }
   }
 
   visible: count > 0 && !dismissed
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
 
+  Component.onCompleted: refresh()
+
+  // `upgrade-check` calls this after every state change.
   ShellIpc {
     target: "local.upgrades"
     function refresh(): void { root.broadcast("refresh") }
@@ -35,66 +60,39 @@ BarWidget {
 
   Process {
     id: statusProc
-    command: ["upgrade-check", "status"]
-    stdout: StdioCollector {
-      onStreamFinished: {
-        try {
-          var s = JSON.parse(String(text || "{}"))
-          root.count = s.count || 0
-          root.dismissed = !!s.dismissed
-          var groups = {}
-          var items = (s.items || []).slice(0, 200)
-          for (var i = 0; i < items.length; i++) {
-            var src = root.plain(items[i].label || items[i].source || "").slice(0, 30)
-            groups[src] = (groups[src] || []).concat(root.plain(items[i].name || "").slice(0, 60))
-          }
-          var lines = []
-          for (var k in groups) {
-            var names = groups[k]
-            lines.push(k + " (" + names.length + "): " + names.slice(0, 6).join(", ") + (names.length > 6 ? ", …" : ""))
-          }
-          root.details = lines.join("\n")
-        } catch (e) {
-          root.count = 0
-        }
-      }
-    }
+    command: [root.tool, "status"]
+    stdout: StdioCollector { onStreamFinished: root.applyStatus(String(text || "")) }
   }
 
-  // Full check (network). Notifies only when the pending set is new.
+  // Network check; the tool serialises concurrent runs and toasts only for a new set.
   Process {
     id: checkProc
-    command: ["upgrade-check", "check", "--notify"]
     onExited: root.refresh()
   }
 
-  Timer { // pick up state written by the boot / update hooks
-    interval: 2000
-    running: true
-    repeat: false
-    onTriggered: root.refresh()
-  }
-
+  // Cheap poll: the tool skips the real check until the last one is older than
+  // checkEverySeconds, so this also catches up soon after a suspend.
   Timer {
-    interval: 21600000 // 6h
+    interval: 30 * 60 * 1000
     running: true
     repeat: true
-    onTriggered: root.recheck()
+    onTriggered: root.check(false)
   }
 
   BarIconButton {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: "󰏔" // nf-md-package_up
+    text: "󰏔"
     slotSize: Style.bar.statusSlot
-    tooltipText: root.count + " upgrade" + (root.count === 1 ? "" : "s") + " pending\n"
-      + root.details
-      + "\n\nClick: update · Right-click: not now · Middle: re-check"
-    onPressed: function(btn) {
-      if (btn === Qt.RightButton) root.run(["dismiss"])
-      else if (btn === Qt.MiddleButton) root.recheck()
-      else root.run(["update"])
+    labelText: root.count > 0 ? String(root.count) : ""
+    tooltipText: root.count + (root.count === 1 ? " upgrade" : " upgrades") + " pending\n"
+      + root.lines.join("\n")
+      + "\n\nClick: details · Right-click: not now · Middle-click: check now"
+    onPressed: function(mouseButton) {
+      if (mouseButton === Qt.RightButton) root.run("dismiss")
+      else if (mouseButton === Qt.MiddleButton) root.check(true)
+      else root.run("notify")
     }
   }
 }
