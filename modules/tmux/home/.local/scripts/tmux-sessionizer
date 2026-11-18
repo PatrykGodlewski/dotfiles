@@ -1,4 +1,15 @@
 #!/bin/bash
+# Pick a project from $DOTS_PROJECT_ROOT (set with: dot projects <path>) and
+# open / switch to a tmux session for it.
+
+# launched outside a shell (keybinding, launcher): read dot's setting directly
+if [[ -z ${DOTS_PROJECT_ROOT:-} && -f $HOME/.config/dotfiles/env.sh ]]; then
+    . "$HOME/.config/dotfiles/env.sh"
+fi
+if [[ -z ${DOTS_PROJECT_ROOT:-} ]]; then
+    if [[ -d $HOME/Projects ]]; then DOTS_PROJECT_ROOT=$HOME/Projects; else DOTS_PROJECT_ROOT=$HOME/projects; fi
+fi
+
 switch_to() {
     if [[ -z $TMUX ]]; then
         tmux attach-session -t $1
@@ -22,9 +33,7 @@ hydrate() {
 if [[ $# -eq 1 ]]; then
     selected=$1
 else
-    # If someone wants to make this extensible, i'll accept
-    # PR
-    selected=$(find ~/projects -mindepth 1 -maxdepth 1 -type d | fzf)
+    selected=$(find "$DOTS_PROJECT_ROOT" -mindepth 1 -maxdepth 1 -type d | fzf)
 fi
 
 if [[ -z $selected ]]; then

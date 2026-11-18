@@ -5,18 +5,19 @@ My configs and apps, managed by [dot](https://github.com/PatrykGodlewski/dot).
 ## Set up a machine
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dot/main/install.sh | bash -s -- --repo https://github.com/PatrykGodlewski/dotfiles --dir ~/Projects/dotfiles
+curl -fsSL https://raw.githubusercontent.com/PatrykGodlewski/dot/main/install.sh | bash -s -- --repo https://github.com/PatrykGodlewski/dotfiles --dir ~/Projects/dotfiles --projects ~/Projects
 ```
 
-This installs dot, clones this repo to `~/Projects/dotfiles` and starts `dot setup`, which asks:
-1. **copy or link**: how configs go on this machine
-2. **apps**: which modules to install (each comes with its configs)
-3. **more configs**: configs to add without installing their apps
-4. **Omarchy profile** (on Omarchy): which defaults / installers / removals to run
+This installs dot, clones this repo to `~/Projects/dotfiles`, sets the projects folder to `~/Projects` and starts `dot setup`, which asks:
+1. **projects folder**: confirm or change it (saved as `$DOTS_PROJECT_ROOT`)
+2. **copy or link**: how configs go on this machine
+3. **apps**: which modules to install (each comes with its configs)
+4. **more configs**: configs to add without installing their apps
+5. **Omarchy profile** (on Omarchy): which defaults / installers / removals to run
 
 Pick nothing to skip a step. Nothing changes without a confirmation.
 
-Later: `dot` (menu), `dot sync` (record what changed on this machine), `dot update` (pull + refresh).
+Later: `dot projects <path>` (move the projects folder), `dot` (menu), `dot sync` (record what changed on this machine), `dot update` (pull + refresh).
 
 ## What's here
 
@@ -29,6 +30,8 @@ Notes:
 - On Omarchy, `hyprland` is skipped: Omarchy manages its own Hyprland setup.
 - `shell` sets up bash and zsh the same way on every distro and makes zsh the login shell (log out and in once afterwards):
   - `~/.config/shell/env.sh`, `aliases.sh`, `functions.sh`: shared by both shells. Edit these for PATH, aliases and functions.
+  - `env.sh` also loads `~/.config/dotfiles/env.sh` (written by `dot`), which exports `DOTS_PROJECT_ROOT`
+- Scripts that need the projects folder read `$DOTS_PROJECT_ROOT` instead of a hardcoded path (e.g. `tmux-sessionizer`). Change it with `dot projects <path>`.
   - `~/.bashrc`: the distro's own default `.bashrc` (Omarchy's setup on Omarchy), then the shared files
   - `~/.zshrc`: Omarchy's setup (on Omarchy), the shared files, zinit plugins, oh-my-posh prompt
 
