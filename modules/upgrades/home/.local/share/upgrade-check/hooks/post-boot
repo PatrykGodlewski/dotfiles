@@ -1,0 +1,3 @@
+#!/bin/bash
+# Check for upgrades after login without holding up the other post-boot hooks.
+setsid upgrade-check check --notify --wait-network &>/dev/null &

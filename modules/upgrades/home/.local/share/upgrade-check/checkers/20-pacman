@@ -1,0 +1,5 @@
+#!/bin/bash
+# label:  Pacman
+# update: omarchy-update
+# checkupdates syncs a temp db, so no sudo. Omarchy itself is reported by 10-omarchy.
+checkupdates --nocolor 2>/dev/null | awk '$1 != "omarchy" && $1 != "omarchy-dev" { print $1, $2, $4 }'

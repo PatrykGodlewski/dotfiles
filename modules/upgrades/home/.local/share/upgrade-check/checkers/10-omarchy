@@ -1,0 +1,6 @@
+#!/bin/bash
+# label: 󰣇 Omarchy
+# update: omarchy-update
+out=$(omarchy-update-available 2>/dev/null) || exit 0
+read -r name from _ to <<<"${out%%$'\n'*}"
+echo "${name:-omarchy} ${from:-?} ${to:-new}"

@@ -1,0 +1,180 @@
+#!/bin/bash
+# upgrade-check — what can be upgraded on this machine.
+# Sources are pluggable checker scripts (see checkers/README.md):
+#   ~/.local/share/upgrade-check/checkers/   shared (dotfiles module "upgrades")
+#   ~/.config/upgrade-check/checkers/        machine-local; same name overrides
+#
+#   upgrade-check check [--notify] [--wait-network]
+#                          refresh the state; with --notify, toast when the set
+#                          of pending upgrades is new (never repeats the same set)
+#   upgrade-check list     human-readable pending list
+#   upgrade-check status   state as JSON (used by the bar widget)
+#   upgrade-check dismiss  "not now": hide the widget + toast until something new appears
+#   upgrade-check update   run the update commands for pending sources in a floating terminal
+#   upgrade-check checkers list the active checkers
+#
+# Bar widget: local.upgrades. Its own state, notification app-name and summary,
+# so it never touches Omarchy's own update notification or IPC target.
+
+set -uo pipefail
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/upgrade-check"
+STATE="$STATE_DIR/state.json"
+CHECKER_DIRS=(
+  "${XDG_DATA_HOME:-$HOME/.local/share}/upgrade-check/checkers"
+  "${XDG_CONFIG_HOME:-$HOME/.config}/upgrade-check/checkers"
+)
+CHECKER_TIMEOUT=90
+APP_NAME="upgrade-check"
+SUMMARY="System upgrades pending" # dismissal matches by substring: keep it distinctive
+WIDGET_IPC="local.upgrades"
+
+mkdir -p "$STATE_DIR"
+
+read_state() { [[ -s $STATE ]] && cat "$STATE" || echo '{}'; }
+write_state() { local tmp; tmp=$(mktemp "$STATE_DIR/.state.XXXXXX") && cat >"$tmp" && mv -f "$tmp" "$STATE"; }
+refresh_widget() { omarchy-shell -q "$WIDGET_IPC" refresh; }
+dismiss_toast() { omarchy-shell -q notifications dismiss "$SUMMARY"; }
+
+wait_network() {
+  for _ in {1..30}; do
+    ping -c1 -W1 archlinux.org &>/dev/null && return 0
+    sleep 2
+  done
+  return 1
+}
+
+# Active checkers, one path per line, sorted by file name; later dirs override.
+checkers() {
+  declare -A by_name=()
+  local d f
+  for d in "${CHECKER_DIRS[@]}"; do
+    [[ -d $d ]] || continue
+    for f in "$d"/*; do
+      [[ -f $f ]] || continue
+      by_name[${f##*/}]=$f
+    done
+  done
+  for f in $(printf '%s\n' "${!by_name[@]}" | sort); do
+    [[ -x ${by_name[$f]} ]] && printf '%s\n' "${by_name[$f]}"
+  done
+}
+
+header() { sed -n "s/^# $2: *//p" "$1" | head -1; } # header <file> <key>
+
+# Items as JSON lines: {source, label, update, name, from, to}
+collect() {
+  local f id label update
+  while read -r f; do
+    id=${f##*/}
+    id=${id#[0-9][0-9]-}
+    label=$(header "$f" label)
+    update=$(header "$f" update)
+    timeout "$CHECKER_TIMEOUT" "$f" 2>/dev/null | awk 'NF { print $1 "\t" $2 "\t" $3 }' |
+      jq -Rc --arg s "$id" --arg l "${label:-$id}" --arg u "$update" \
+        'split("\t") | {source:$s, label:$l, update:$u, name:.[0], from:.[1], to:.[2]}'
+  done < <(checkers)
+}
+
+summary_lines() { # stdin: state json
+  # one line per source, in checker order
+  jq -r '(.items // []) as $i
+         | ($i | reduce .[].source as $s ([]; if index([$s]) then . else . + [$s] end))[] as $s
+         | $i | map(select(.source == $s))
+         | "\(.[0].label): " + (if length > 4 then "\(length) — " else "" end)
+           + (map(.name) | .[:6] | join(", ")) + (if length > 6 then ", …" else "" end)'
+}
+
+cmd_check() {
+  local notify=0 wait=0 a
+  for a in "$@"; do
+    case $a in
+      --notify) notify=1 ;;
+      --wait-network) wait=1 ;;
+    esac
+  done
+  ((wait)) && wait_network
+
+  local items sig prev
+  items=$(collect | jq -sc '.')
+  sig=$(jq -r 'map("\(.source):\(.name):\(.to)") | sort | join("\n")' <<<"$items" | sha1sum | cut -d' ' -f1)
+  prev=$(read_state)
+
+  jq -n --argjson items "$items" --arg sig "$sig" --argjson prev "$prev" \
+    '{items:$items, signature:$sig, checked:(now|floor),
+      dismissed:($prev.dismissed // ""), notified:($prev.notified // "")}' | write_state
+
+  if [[ $(jq 'length' <<<"$items") == 0 ]]; then
+    dismiss_toast
+  elif ((notify)) && [[ $sig != "$(jq -r .dismissed "$STATE")" && $sig != "$(jq -r .notified "$STATE")" ]]; then
+    dismiss_toast # replace an older toast of ours instead of stacking
+    omarchy-notification-send --app-name "$APP_NAME" -u normal -g 󰏔 "$SUMMARY" "$(summary_lines <"$STATE")" \
+      --action "Update" upgrade-check update \
+      --action "Not now" upgrade-check dismiss
+    jq --arg sig "$sig" '.notified = $sig' "$STATE" | write_state
+  fi
+
+  refresh_widget
+}
+
+cmd_status() {
+  read_state | jq -c '{
+    count: ((.items // []) | length),
+    dismissed: ((.signature // "") != "" and .signature == .dismissed),
+    checked: (.checked // 0),
+    items: (.items // [])
+  }'
+}
+
+cmd_list() {
+  local s; s=$(read_state)
+  if [[ $(jq '(.items // []) | length' <<<"$s") == 0 ]]; then
+    echo "Everything is up to date"
+    return
+  fi
+  jq -r '.items[] | "\(.source)\t\(.name)\t\(.from) → \(.to)"' <<<"$s" | column -t -s $'\t'
+}
+
+cmd_checkers() {
+  local f
+  while read -r f; do
+    printf '%-12s %-14s %s\n' "${f##*/}" "$(header "$f" label)" "$(header "$f" update)"
+  done < <(checkers)
+}
+
+cmd_dismiss() {
+  jq '.dismissed = (.signature // "")' <<<"$(read_state)" | write_state
+  dismiss_toast
+  refresh_widget
+}
+
+cmd_update() {
+  dismiss_toast
+  setsid omarchy-launch-floating-terminal-with-presentation upgrade-check run-updates &>/dev/null &
+}
+
+# Runs in the terminal: each distinct update command of the pending sources, once.
+cmd_run_updates() {
+  local cmd ran=0
+  while IFS= read -r cmd; do
+    [[ -n $cmd ]] || continue
+    printf '\e[32m\n==> %s\e[0m\n' "$cmd"
+    bash -c "$cmd" || printf '\e[31m%s failed\e[0m\n' "$cmd"
+    ran=1
+  done < <(read_state | jq -r '[(.items // [])[].update] | unique[]')
+  ((ran)) || echo "Nothing to update (no pending source has an update command)."
+  # omarchy-update re-checks via its post-update hook; re-check here for the rest.
+  upgrade-check check
+}
+
+case ${1:-list} in
+  check) shift; cmd_check "$@" ;;
+  status) cmd_status ;;
+  list) cmd_list ;;
+  checkers) cmd_checkers ;;
+  dismiss) cmd_dismiss ;;
+  update) cmd_update ;;
+  run-updates) cmd_run_updates ;;
+  -h | --help | help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) echo "unknown command: $1 (see upgrade-check help)" >&2; exit 1 ;;
+esac

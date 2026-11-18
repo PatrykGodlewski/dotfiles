@@ -1,0 +1,3 @@
+#!/bin/bash
+# After `omarchy update`, re-check so the bar widget clears what was installed.
+upgrade-check check

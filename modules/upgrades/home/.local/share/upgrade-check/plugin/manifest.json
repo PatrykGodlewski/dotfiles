@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "local.upgrades",
+  "name": "Upgrades",
+  "version": "1.0.0",
+  "author": "local",
+  "description": "Pending upgrades: Omarchy, pacman, AUR and mise",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Upgrades.qml"
+  },
+  "barWidget": {
+    "displayName": "Upgrades",
+    "description": "Pending upgrades: Omarchy, pacman, AUR and mise",
+    "category": "System",
+    "allowMultiple": false
+  }
+}

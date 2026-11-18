@@ -1,0 +1,5 @@
+#!/bin/bash
+# label:  AUR
+# update: omarchy-update
+command -v yay &>/dev/null || exit 0
+yay -Qua 2>/dev/null | awk '{ print $1, $2, $4 }'
