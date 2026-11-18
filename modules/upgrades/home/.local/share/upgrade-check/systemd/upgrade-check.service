@@ -1,0 +1,10 @@
+[Unit]
+Description=Check for pending upgrades (upgrade-check)
+After=network-online.target graphical-session.target
+
+[Service]
+Type=oneshot
+# --notify toasts only when the pending set is new; --wait-network rides out resume.
+ExecStart=%h/.local/bin/upgrade-check check --notify --wait-network
+Nice=10
+IOSchedulingClass=idle

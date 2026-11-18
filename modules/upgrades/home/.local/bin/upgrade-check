@@ -205,11 +205,11 @@ cmd_update() {
 # come from the user's own checker headers.
 cmd_run_updates() {
   local cmd ran=0
-  while IFS= read -r cmd; do
+  while IFS= read -r -u 3 cmd; do
     printf '\e[32m\n==> %s\e[0m\n' "$cmd"
     bash -c "$cmd" || printf '\e[31m==> failed: %s\e[0m\n' "$cmd"
     ran=1
-  done < <(read_state | jq -r '[(.items // [])[].update | select(. != "")] | unique[]')
+  done 3< <(read_state | jq -r '[(.items // [])[].update | select(. != "")] | unique[]')
   ((ran)) || echo "Nothing to update: no pending source has an update command."
   cmd_check
 }
